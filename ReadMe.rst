@@ -30,9 +30,9 @@ Goals
 KEEP IT SIMPLE
 **************
 
-  Admins should be able to understand and troubleshoot the system after a few minutes
+Admins should be able to understand and troubleshoot the system after a few minutes
 
-  Functionality can be added using plugins. Allowing for advanced usage without increasing the core engines complexity.
+Functionality can be added using plugins. Allowing for advanced usage without increasing the core engines complexity.
 
 
 Functionality
@@ -61,7 +61,7 @@ Also - allows easy:
 
 * debugging (*by simply reading the json output in your browser*)
 
-Modular expandability
+Modular extensibility
 =====================
 
 The core uses PLUGINS to achieve its functionality.
@@ -70,13 +70,13 @@ Keeping the footprint of the base-engine small - you can add plugins as needed.
 
 **Example plugins**:
 
-  * Resource for systemd services
+* Resource for systemd services
 
-  * Resource for ip-addresses
+* Resource for ip-addresses
 
-  * Monitoring of a running process
+* Monitoring of a running process
 
-  * Monitoring if some remote port is reachable
+* Monitoring if some remote port is reachable
 
   The structure of such a plugin should be logic.
 
