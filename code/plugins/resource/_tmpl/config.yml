@@ -1,0 +1,34 @@
+---
+
+description: 'arg 1: a, arg 2: b'  # some description that makes the plugins usage easier
+
+start:
+  exec: '/bin/bash start.sh'  # start the resource
+  arguments: 2  # number of arguments that have to be passed
+
+stop:
+  exec: '/bin/bash stop.sh'  # stop it
+  args: 2
+
+active:
+  exec: '/bin/bash active.sh'  # check if the resource is active right now
+  args: 2
+
+init:
+  exec: '/bin/bash init.sh'  # tasks to run when the service gets initialized
+  args: 2
+
+# actions if this is a clustered resource
+ami:
+  exec: '/bin/bash ami.sh'  # is this server the leader
+
+promote:
+  exec: '/bin/bash promote.sh'  # how to get leader
+
+demote:
+  exec: '/bin/bash demote.sh'  # how to 'step down' as leader
+
+# may be useful
+fix:
+  exec: '/bin/bash fix.sh'
+  # run if you expect some errors to occur from time to time and want to auto-'hotfix' them

@@ -1,0 +1,20 @@
+---
+
+description: "-i: the ip address (pe: '-i=10.10.4.2'), -d: device to add the ip to (pe: '-d=eno1')"
+
+start:
+  exec: '/bin/bash start.sh'  # start the resource
+  args: 2
+
+stop:
+  exec: '/bin/bash start.sh'  # start the resource
+  args: 2
+
+active:
+  exec: '/bin/bash active.sh'  # check if the resource is active right now
+  args: 2
+
+privileges:
+  sudo:
+  - 'ip address del'
+  - 'ip address add'

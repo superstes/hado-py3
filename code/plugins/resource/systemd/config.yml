@@ -1,0 +1,27 @@
+---
+
+description: "-u: the service name (pe: '-u=networking.service')"
+
+start:
+  exec: '/bin/bash start.sh'  # start the resource
+  args: 1
+
+stop:
+  exec: '/bin/bash start.sh'  # start the resource
+  args: 1
+
+active:
+  exec: '/bin/bash active.sh'  # check if the resource is active right now
+  args: 1
+
+init:
+  exec: '/bin/bash init.sh'  # tasks to run when the service gets initialized
+  args: 1
+
+privileges:
+  sudo:
+  - 'systemctl start'
+  - 'systemctl stop'
+  - 'systemctl disable'
+  - 'systemctl enable'
+  - 'systemctl is-active'
