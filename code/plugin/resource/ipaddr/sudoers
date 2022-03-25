@@ -1,0 +1,9 @@
+# HADO - HA Clustering Engine
+# Plugin privileges
+#   resource ipaddr
+
+Cmnd_Alias HADO_PLUGIN_RES_IPADDR = \
+ip address del *, \
+ip address add *
+
+hado ALL=(ALL) NOPASSWD: HADO_PLUGIN_RES_IPADDR

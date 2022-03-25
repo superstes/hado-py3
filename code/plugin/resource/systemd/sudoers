@@ -1,0 +1,12 @@
+# HADO - HA Clustering Engine
+# Plugin privileges
+#   resource systemd
+
+Cmnd_Alias HADO_PLUGIN_RES_SYSTEMD = \
+systemctl start *.service, \
+systemctl stop *.service, \
+systemctl disable *.service, \
+systemctl enable *.service, \
+systemctl is-active *.service
+
+hado ALL=(ALL) NOPASSWD: HADO_PLUGIN_RES_SYSTEMD

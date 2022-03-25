@@ -18,9 +18,13 @@ init:
   exec: '/bin/bash init.sh'  # tasks to run when the service gets initialized
   args: 2
 
+other:
+  exec: '/bin/bash other.sh'  # prevent active-active state by checking if other is active before starting (in addition to basic node state-sync)
+  args: 2
+
 # actions if this is a clustered resource
-ami:
-  exec: '/bin/bash ami.sh'  # is this server the leader
+leader:
+  exec: '/bin/bash leader.sh'  # is this server the leader
 
 promote:
   exec: '/bin/bash promote.sh'  # how to get leader
@@ -31,4 +35,4 @@ demote:
 # may be useful
 fix:
   exec: '/bin/bash fix.sh'
-  # run if you expect some errors to occur from time to time and want to auto-'hotfix' them
+  # you expect some errors to occur from time to time and want to auto-'hotfix' it

@@ -1,20 +1,19 @@
 ---
 
-description: "-i: the ip address (pe: '-i=10.10.4.2'), -d: device to add the ip to (pe: '-d=eno1')"
+description: "-u: the service name (pe: '-u=networking.service')"
 
 start:
   exec: '/bin/bash start.sh'  # start the resource
-  args: 2
+  args: 1
 
 stop:
   exec: '/bin/bash start.sh'  # start the resource
-  args: 2
+  args: 1
 
 active:
   exec: '/bin/bash active.sh'  # check if the resource is active right now
-  args: 2
+  args: 1
 
-privileges:
-  sudo:
-  - 'ip address del'
-  - 'ip address add'
+init:
+  exec: '/bin/bash init.sh'  # tasks to run when the service gets initialized
+  args: 1

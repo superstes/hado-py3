@@ -1,1 +1,1 @@
-flask flask-restful pyyaml python-dotenv requests
+flask flask-restful pyyaml requests

@@ -1,26 +1,14 @@
-.. |docs_badge| image:: https://readthedocs.org/projects/hado-python3/badge/?version=latest
-
-********************************
-HA-DO - SIMPLE Clustering Engine
-********************************
-
-Work-in-progress
-################
-
-This project is not yet in a stable state.
-
-If you want to help building this HA-Engine => feel free to start discussions and open bugs/pr's!
-
-
+*****
 Intro
-#####
+*****
+
+
+HA-DO Clustering Engine
+#######################
 
 The goal of this project is it to provide a **simple base-engine for building high-available systems**.
 
-`CoroSync <https://github.com/corosync>`_, `Heartbeat <http://www.linux-ha.org/wiki/Heartbeat>`_ and `Pacemaker <http://www.linux-ha.org/wiki/Pacemaker>`_ build the probably most commonly used HA-clustering stack.
-
-I want to code an alternative to it.
-
+Simplicity is a feature.
 
 ----
 
@@ -89,24 +77,3 @@ Transparency
 ************
 
 The functionality of the core should be logic and easily understandable and to troubleshoot.
-
-
-Not really Goals
-################
-
-* Performance
-
-  Python isn't the best performing language, but it does the job and is easy to read/write/understand.
-
-  In the future we might write a GoLang implementation of this engine to achieve better performance, scalability and portability.
-
-----
-
-Documentation
-#############
-
-Documentation is very important to us as it enables it's usage.
-
-|docs_badge|
-
-You can find the documentation here: `Read the docs <https://hado.superstes.eu>`_

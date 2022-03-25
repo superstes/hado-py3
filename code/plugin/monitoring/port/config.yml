@@ -1,0 +1,7 @@
+---
+
+description: "-t: target ip/hostname, -p: target port, -s: source ip (optional), -w: timeout in seconds (optional, pe: '-w=0.3', default=0.2), -P: protocol to use (optional, pe: '-p=udp', options='tcp,udp', default=tcp)"
+
+check:
+  exec: '/bin/bash check.sh'  # start the monitoring check
+  args: 2

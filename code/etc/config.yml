@@ -1,0 +1,37 @@
+apps:
+  fancy:
+    description: Such a fancy app
+    on_failure: stop
+    # on_shutdown: leave
+    monitoring:
+      other_service:
+        interval: 60
+        plugin: port
+        plugin_args: -t=11.0.9.5 -p=8080 -s=10.1.5.100
+    resources:
+      background-task:
+        mode: standalone
+        plugin: systemd
+        plugin_args: -s=bgtasks.service
+        status: 1
+        vital: false
+      database:
+        mode: cluster
+        mode_prio: 2
+        plugin: mysql
+        plugin_args: -i=fancyDB
+        status: 1
+      share:
+        plugin: samba_share
+        plugin_args: -s=fancy
+        status: 0
+      some_ip:
+        plugin: ipaddr
+        plugin_args: -i=10.1.5.4 -d=eno1
+        status: 1
+system:
+  monitoring:
+    ping_gw:
+      interval: 10
+      plugin: ping
+      plugin_args: -t=10.1.5.1 -s=10.1.5.100

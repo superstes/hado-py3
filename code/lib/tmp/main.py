@@ -8,58 +8,68 @@ rest_api = RestApi(rest_app)
 
 config = {
     'system': {
-        'monitoring': {
+        'monitoring': {  # testing system health and availability of external resources that affect all apps
             'ping_gw': {
                 'plugin': 'ping',
-                'plugin_data': '10.1.5.1 10.1.5.100',
+                'plugin_args': '-t=10.1.5.1 -s=10.1.5.100',
                 'interval': 10,
-            }
-        }
+            },
+        },
     },
     'apps': {
         'fancy': {
             'description': 'Such a fancy app',
             'status': 0,
-            'health': 66,  # percentage of resources running
-            'fail_action': 'stop',  # if a vital part of the application breaks; stop all other parts on this server
+            'health': 66,  # percentage of resources available
+            'on_failure': 'stop',  # if a vital part of the application breaks; stop all other parts on this server
+            # stop/leave
             'resources': {
                 'background-task': {
                     'plugin': 'systemd',
-                    'plugin_data': 'bgtasks.service',
+                    'plugin_args': '-s=bgtasks.service',
                     'mode': 'standalone',  # default
                     'vital': False,  # default
                     'status': 1,
                 },
                 'share': {
                     'plugin': 'samba_share',
-                    'plugin_data': 'fancy',
+                    'plugin_args': '-s=fancy',
                     'vital': True,  # the app will be marked as failed if a vital part is down
                     'status': 0,
                 },
                 'database': {
                     'plugin': 'mysql',
-                    'plugin_data': 'fancyDB',
+                    'plugin_args': '-i=fancyDB',
                     'mode': 'cluster',
                     'vital': True,
                     'status': 1,
                 },
                 'some_ip': {
                     'plugin': 'ipaddr',
-                    'plugin_data': '10.1.5.4 eno1',
+                    'plugin_args': '-i=10.1.5.4 -d=eno1',
                     'vital': True,
                     'status': 1,
+                },
+            },
+            'monitoring': {  # testing system health and availability of external resources that only affect this app
+                'other_service': {
+                    'plugin': 'port',  # checking if a port is reachable
+                    'plugin_args': '-t=11.0.9.5 -p=8080 -s=10.1.5.100',
+                    'interval': 60,
                 },
             },
         },
     },
 }
 
+with open('test.yml', 'w') as cnf:
+    cnf.write(yaml.dump(config))
+
 
 class App(RestResource):
     def get(self, name: str):
         app = config['apps'][name] if name in config['apps'] else {}
-        with open('test.yml', 'w') as cnf:
-            cnf.write(yaml.dump(app))
+
         return app
 
 
