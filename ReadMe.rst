@@ -11,6 +11,7 @@ This project is not yet in a stable state.
 
 If you want to help building this HA-Engine => feel free to start discussions and open bugs/pr's!
 
+----
 
 Intro
 #####
