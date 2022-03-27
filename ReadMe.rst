@@ -1,5 +1,5 @@
 .. |badge_docs| image:: https://readthedocs.org/projects/hado-py3/badge/?version=latest
-.. |badge_test| image:: https://github.com/superstes/hado-py3/actions/workflows/tests/badge.svg
+.. |badge_test| image:: https://github.com/superstes/hado-py3/actions/workflows/tests.yaml/badge.svg
 
 ********************************
 HA-DO - SIMPLE Clustering Engine
