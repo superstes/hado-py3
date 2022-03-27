@@ -1,11 +1,14 @@
-.. |badge_docs| image:: https://readthedocs.org/projects/hado-py3/badge/?version=latest
-.. |badge_test| image:: https://github.com/superstes/hado-py3/actions/workflows/tests.yaml/badge.svg
-
 ********************************
 HA-DO - SIMPLE Clustering Engine
 ********************************
 
-|badge_test| | |badge_docs|
+.. image:: https://github.com/superstes/hado-py3/actions/workflows/tests.yaml/badge.svg
+   :target: https://github.com/superstes/hado-py3/actions/workflows/tests.yaml
+   :alt: UnitTests
+
+.. image:: https://readthedocs.org/projects/hado-python3/badge/?version=latest
+   :target: https://hado.superstes.eu
+   :alt: Documentation
 
 Work-in-progress
 ################
@@ -112,6 +115,8 @@ Documentation
 
 Documentation is very important to us as it enables it's usage.
 
-|badge_docs|
+.. image:: https://readthedocs.org/projects/hado-python3/badge/?version=latest
+   :target: https://hado.superstes.eu
+   :alt: Documentation
 
 You can find the documentation here: `Read the docs <https://hado.superstes.eu>`_
