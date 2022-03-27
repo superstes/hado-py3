@@ -1,1 +1,6 @@
-flask flask-restful pyyaml requests pytest pytest-mock
+flask
+flask-restful
+PyYAML
+requests
+pytest
+pytest-mock
