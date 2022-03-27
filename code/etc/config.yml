@@ -1,37 +1,51 @@
+---
+
+# file to configure your ha-apps, -resources and peers
+
 apps:
   fancy:
     description: Such a fancy app
     on_failure: stop
     # on_shutdown: leave
+
     monitoring:
       other_service:
         interval: 60
         plugin: port
         plugin_args: -t=11.0.9.5 -p=8080 -s=10.1.5.100
+
     resources:
       background-task:
         mode: standalone
         plugin: systemd
         plugin_args: -s=bgtasks.service
-        status: 1
         vital: false
       database:
-        mode: cluster
+        mode: l2w  # leader to worker
         mode_prio: 2
         plugin: mysql
         plugin_args: -i=fancyDB
-        status: 1
       share:
+        mode: standalone
         plugin: samba_share
         plugin_args: -s=fancy
-        status: 0
       some_ip:
+        # mode: active-standby
         plugin: ipaddr
         plugin_args: -i=10.1.5.4 -d=eno1
-        status: 1
+
+    peers:
+      host: 10.0.0.12
+      # port: 6185
+
 system:
+  # port: 6185
+  listen: 10.0.0.11
+
   monitoring:
     ping_gw:
       interval: 10
       plugin: ping
       plugin_args: -t=10.1.5.1 -s=10.1.5.100
+
+peers: {}

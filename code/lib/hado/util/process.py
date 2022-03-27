@@ -1,14 +1,14 @@
 # process handler
 
-from .debug import log
-from ..core.config import CONFIG_ENGINE
+from hado.util.debug import log
+from hado.core.config.shared import CONFIG_ENGINE
 
 from subprocess import Popen as subprocessPopen
 from subprocess import PIPE as SUBPROCESS_PIPE
 from subprocess import TimeoutExpired
 
 
-def subprocess(cmd: (list, str)) -> str:
+def subprocess(cmd: (list, str), timeout: int = CONFIG_ENGINE['PROCESS_TIMEOUT_MONITORING']) -> str:
     log(f"Executing command \"{cmd}\"", 'DEBUG')
 
     if type(cmd) != list:
@@ -21,7 +21,7 @@ def subprocess(cmd: (list, str)) -> str:
             stdout=SUBPROCESS_PIPE,
             stderr=SUBPROCESS_PIPE
         )
-        stdout_bytes, stderr_bytes = proc.communicate(timeout=CONFIG_ENGINE['PROCESS_TIMEOUT'])
+        stdout_bytes, stderr_bytes = proc.communicate(timeout=timeout)
         stdout, stderr = stdout_bytes.decode('utf-8').strip(), stderr_bytes.decode('utf-8').strip()
         exit_code = proc.returncode
 

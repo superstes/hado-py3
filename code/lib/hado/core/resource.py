@@ -1,10 +1,15 @@
-from ..util.debug import log
-from ..core.config import CONFIG_ENGINE, HARDCODED
-from .plugin import Plugin, PluginType, BasePluginUse
+from hado.util.debug import log
+from hado.core.config.shared import CONFIG_ENGINE
+from hado.core.config.defaults import HARDCODED
+from hado.core.plugin import Plugin, PluginType, BasePluginUse
 
 
 class Resource(BasePluginUse):
     plugin_type = PluginType.resource
+    on_failure = None
+    on_shutdown = None
+    mode = CONFIG_ENGINE['DEFAULT_RESOURCE_MODE']
+    mode_prio = CONFIG_ENGINE['DEFAULT_RESOURCE_MODE_PRIO']
 
     def __init__(self, plugin_name: str, config: dict, sequence: int):
         super().__init__(
@@ -17,14 +22,13 @@ class Resource(BasePluginUse):
             )
         )
         self.sequence = sequence
-        self.on_failure = config['on_failure'] if 'on_failure' in config else None
-        self.on_shutdown = config['on_shutdown'] if 'on_shutdown' in config else None
-        self.mode = config['mode'] if 'mode' in config else CONFIG_ENGINE['DEFAULT_RESOURCE_MODE']
-        self.mode_prio = config['mode_prio'] if 'mode_prio' in config else CONFIG_ENGINE['DEFAULT_RESOURCE_MODE_PRIO']
+        self._set_attr(data=config, attr='on_failure')
+        self._set_attr(data=config, attr='on_shutdown')
+        self._set_attr(data=config, attr='mode')
+        self._set_attr(data=config, attr='mode_prio')
 
     def action(self, do: str) -> bool:
         if do in self.plugin.CMDS:
-            getattr(self.plugin, do)()
-            return True
+            return getattr(self.plugin, do)()
 
         return False

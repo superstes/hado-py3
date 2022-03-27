@@ -18,3 +18,9 @@ active:
 other:
   exec: '/bin/bash other.sh'  # check if the resource is active on another node
   args: 2
+
+modes:
+  valid:
+  - 'active-standby'
+  - 'standalone'
+  fallback: 'active-standby'

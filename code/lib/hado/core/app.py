@@ -1,23 +1,28 @@
-from ..util.debug import log
-from ..core.config import CONFIG_ENGINE
-from .plugin_types import Resource, Monitoring
+from hado.util.debug import log
+from hado.core.config.shared import CONFIG_ENGINE
+from hado.core.resource import Resource
+from hado.core.monitoring import Monitoring
 
 
 class App:
     REACTIONS = ['stop', 'demote', 'leave']
+    on_failure = CONFIG_ENGINE['DEFAULT_ACTION_FAILURE']
+    on_shutdown = CONFIG_ENGINE['DEFAULT_ACTION_SHUTDOWN']
 
     def __init__(self, name: str, app: dict):
         self.name = name
         self.log_id = f"App - {self.name} -"
 
         self.resources = []
-        for loop_idx, name in enumerate(app['resources']):
-            res = app['resources'][name]
+        next_seq = self._get_highest_sequence(app['resources']) + 1
+        for name, res in app['resources'].items():
             self.resources.append(Resource(
                 plugin_name=name,
                 config=res,
-                sequence=res['sequence'] if 'sequence' in res else loop_idx,
+                sequence=res['sequence'] if 'sequence' in res else next_seq,
             ))
+            if 'sequence' not in res:
+                next_seq += 1
 
         self.monitoring = []
         if 'monitoring' in app:
@@ -27,13 +32,16 @@ class App:
                     config=mon,
                 ))
 
-        self.on_failure = app['on_failure'] if 'on_failure' in app else CONFIG_ENGINE['DEFAULT_ACTION_FAILURE']
-        self.on_shutdown = app['on_shutdown'] if 'on_shutdown' in app else CONFIG_ENGINE['DEFAULT_ACTION_SHUTDOWN']
+        self._set_attr(data=app, attr='on_failure')
+        self._set_attr(data=app, attr='on_shutdown')
 
-        self.action(do='init')
+        self.action('init')
 
     def check(self):
         log(f"{self.log_id} Starting check!", 'DEBUG')
+
+        # failover handling should be abstracted into separate class
+        # check handling should also be separated
 
         # if failed
         #   try to recover
@@ -67,7 +75,7 @@ class App:
                     a = r.on_failure
 
                 if a != 'leave':
-                    r.action(do=a)
+                    r.action(a)
 
     def shutdown(self):
         log(f"{self.log_id} Starting shutdown actions!")
@@ -78,11 +86,11 @@ class App:
                     a = r.on_shutdown
 
                 if a != 'leave':
-                    r.action(do=a)
+                    r.action(a)
 
     def action(self, do: str):
         for r in self.resources:
-            r.action(do=do)
+            r.action(do)
 
     @property
     def resource_health(self) -> float:
@@ -113,3 +121,17 @@ class App:
     @property
     def status(self) -> int:
         return 1 if self.running else 0
+
+    def _set_attr(self, data: dict, attr: str):
+        if attr in data:
+            setattr(self, attr, data[attr])
+
+    @staticmethod
+    def _get_highest_sequence(resources: dict) -> int:
+        seqs = [0]
+
+        for res in resources:
+            if 'sequence' in res:
+                seqs.append(int(res['sequence']))
+
+        return max(seqs)

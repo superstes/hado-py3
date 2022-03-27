@@ -23,11 +23,12 @@
 #   (export PYTHONPATH=/var/lib/hado)
 #   it's being set automatically by the systemd service
 
-from ..util.threader import Loop as Thread
-from ..util.debug import log
-from ..core.config import HARDCODED
+from hado.util.threader import Loop as Thread
+from hado.util.debug import log
+from hado.core.config.defaults import HARDCODED
+from hado.core.config.dump import dump_defaults
 
-from yaml import load as yaml_load
+from yaml import safe_load as yaml_load
 from os import path as os_path
 from time import sleep as time_sleep
 from time import time
@@ -43,7 +44,8 @@ class Service:
         signal.signal(signal.SIGINT, self.stop)
         self.CONFIG_HA = {}
         self.CONFIG_ENGINE = {}
-        self._init_shared_vars()
+        self.CONFIG_LOADED = {}
+        self._init_config()
         self.THREADER = Thread()
 
     def start(self):
@@ -64,17 +66,19 @@ class Service:
         log(f"Service received signal {signum}", 'WARNING')
         raise SystemExit('Service exited.')
 
-    def _init_shared_vars(self):
+    def _init_config(self):
+        dump_defaults()
+
         if os_path.isfile(HARDCODED['CONFIG_HA']):
             with open(HARDCODED['CONFIG_HA'], 'r') as cnf:
                 self.CONFIG_HA = yaml_load(cnf.read())
 
-            from ..core.config import init
+            from hado.core.config.shared import init
             init()
-            from ..core.config import CONFIG_HA
-            from ..core.config import CONFIG_ENGINE
+            from hado.core.config.shared import CONFIG_HA, CONFIG_ENGINE, CONFIG_LOADED
             CONFIG_HA = self.CONFIG_HA
             CONFIG_ENGINE = self.CONFIG_ENGINE
+            CONFIG_LOADED = self.CONFIG_LOADED
 
             if os_path.isfile(HARDCODED['CONFIG_ENGINE']):
                 with open(HARDCODED['CONFIG_HA'], 'r') as cnf:

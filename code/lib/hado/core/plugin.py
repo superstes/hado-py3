@@ -1,8 +1,11 @@
-from ..util.process import subprocess
-from ..util.debug import log
+# handles plugin interaction
+#   hado ichimonji
+
+from hado.util.process import subprocess
+from hado.util.debug import log
 
 from enum import Enum
-from yaml import load as yaml_load
+from yaml import safe_load as yaml_load
 from os import path as os_path
 
 
@@ -19,6 +22,11 @@ plugin_desc = {
 plugin_cmds = {
     PluginType.monitoring: ['check'],
     PluginType.resource: ['start', 'stop', 'active', 'other', 'init', 'fix', 'promote', 'demote', 'leader']
+}
+
+plugin_cmd_timeouts = {
+    'PROCESS_TIMEOUT_ACTION': ['start', 'stop', 'init', 'fix', 'promote', 'demote'],
+    'PROCESS_TIMEOUT_MONITORING': ['active', 'other', 'leader'],
 }
 
 
@@ -55,15 +63,18 @@ class Plugin:
             if cmd in self.CONFIG:
                 self.CMDS.append(cmd)
 
-    def _check_cmd_support(self, t: str, a: bool = True) -> bool:
+    def _check_cmd_support(self, t: str, s: int = 2) -> bool:
         if t in self.CMDS:
             return True
 
-        elif a:
+        elif s == 1:
             raise ValueError(f"ERROR: {self.log_id} Command type '{t}' not supported!")
 
-        else:
+        elif s == 2:
             log(f"{self.log_id} Command type '{t}' not supported!", 'WARNING')
+
+        elif s == 3:
+            log(f"{self.log_id} Command type '{t}' not supported!", 'DEBUG')
 
     def _get_cmd(self, t: str) -> str:
         cnf_exec = self.CONFIG[t]['exec']
@@ -105,9 +116,7 @@ class Plugin:
               cno: bool = False,
               ca: bool = False, cna: bool = False,
               cnl: bool = False, cl: bool = False,
-              always: bool = False
               ):
-        self._check_cmd_support(t=t, a=always)
         cmd = self._get_cmd(t=t)
         run = True
 
@@ -137,40 +146,57 @@ class Plugin:
                 run = False
 
         if run:
+            for k, v in plugin_cmd_timeouts.items():
+                if t in v:
+                    return subprocess(cmd=cmd, timeout=CONFIG_ENGINE[k])
+
             return subprocess(cmd=cmd)
 
         else:
-            return "0"
+            return '0'
 
     def start(self):
         # start resource
-        log(f"{self.log_id} Starting!", 'INFO')
-        self._exec('start', cno=True, cna=True)
+        t = 'start'
+        if self._check_cmd_support(t=t, s=1):
+            log(f"{self.log_id} Starting!", 'INFO')
+            self._exec(t, cno=True, cna=True)
 
     def stop(self):
         # stop resource
-        log(f"{self.log_id} Stopping!", 'WARNING')
-        self._exec('stop', ca=True)
+        t = 'stop'
+        if self._check_cmd_support(t=t, s=1):
+            log(f"{self.log_id} Stopping!", 'WARNING')
+            self.demote()
+            self._exec(t, ca=True)
 
     def promote(self):
         # promote resource to cluster leader
-        log(f"{self.log_id} Promoting to leader!", 'INFO')
-        self._exec('promote', always=False, cnl=True)
+        t = 'promote'
+        if self._check_cmd_support(t=t, s=2):
+            log(f"{self.log_id} Promoting to leader!", 'INFO')
+            self._exec(t, cnl=True)
 
     def demote(self):
         # demote resource to cluster worker
-        log(f"{self.log_id} Demoting to worker!", 'INFO')
-        self._exec('demote', always=False, cl=True)
+        t = 'demote'
+        if self._check_cmd_support(t=t, s=3):
+            log(f"{self.log_id} Demoting to worker!", 'INFO')
+            self._exec(t, cl=True)
 
     def init(self):
         # initialize resource
-        log(f"{self.log_id} Initializing!", 'INFO')
-        self._exec('init', always=False)
+        t = 'init'
+        if self._check_cmd_support(t=t, s=3):
+            log(f"{self.log_id} Initializing!", 'INFO')
+            self._exec(t)
 
     def fix(self):
         # you expect some error to occur from time to time and want to auto-'hotfix' it
-        log(f"{self.log_id} Running fix!", 'WARNING')
-        self._exec('fix', always=False, cna=True)
+        t = 'fix'
+        if self._check_cmd_support(t=t, s=3):
+            log(f"{self.log_id} Running fix!", 'WARNING')
+            self._exec(t, cna=True)
 
     def _stdout_ok(self, stdout: str) -> bool:
         if stdout == "1":
@@ -183,26 +209,34 @@ class Plugin:
 
     def check(self) -> bool:
         # if monitoring check passed
-        log(f"{self.log_id} running monitoring task.", 'DEBUG')
-        return self._stdout_ok(self._exec('check'))
+        t = 'check'
+        if self._check_cmd_support(t=t, s=1):
+            log(f"{self.log_id} running monitoring task.", 'DEBUG')
+            return self._stdout_ok(self._exec(t))
 
     @property
     def is_active(self) -> bool:
         # if resource is active
-        log(f"{self.log_id} checking if active.", 'DEBUG')
-        return self._stdout_ok(self._exec('active'))
+        t = 'active'
+        if self._check_cmd_support(t=t, s=1):
+            log(f"{self.log_id} checking if active.", 'DEBUG')
+            return self._stdout_ok(self._exec(t))
 
     @property
     def is_other(self) -> bool:
         # check if resource is active on another node
-        log(f"{self.log_id} checking if other is active.", 'DEBUG')
-        return self._stdout_ok(self._exec('other', always=False))
+        t = 'other'
+        if self._check_cmd_support(t=t, s=3):
+            log(f"{self.log_id} checking if other is active.", 'DEBUG')
+            return self._stdout_ok(self._exec(t))
 
     @property
     def is_leader(self) -> bool:
         # check if this node is the leader in a resource cluster
-        log(f"{self.log_id} checking leader state.", 'DEBUG')
-        return self._stdout_ok(self._exec('leader', always=False))
+        t = 'leader'
+        if self._check_cmd_support(t=t, s=3):
+            log(f"{self.log_id} checking leader state.", 'DEBUG')
+            return self._stdout_ok(self._exec(t))
 
 
 class BasePluginUse:
@@ -213,3 +247,7 @@ class BasePluginUse:
     @property
     def status(self):
         return self.plugin.is_active
+
+    def _set_attr(self, data: dict, attr: str):
+        if attr in data:
+            setattr(self, attr, data[attr])

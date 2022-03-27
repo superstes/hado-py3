@@ -1,10 +1,12 @@
-from ..util.debug import log
-from ..core.config import CONFIG_ENGINE, HARDCODED
-from .plugin import Plugin, PluginType, BasePluginUse
+from hado.util.debug import log
+from hado.core.config.shared import CONFIG_ENGINE
+from hado.core.config.defaults import HARDCODED
+from hado.core.plugin import Plugin, PluginType, BasePluginUse
 
 
 class Monitoring(BasePluginUse):
     plugin_type = PluginType.monitoring
+    interval = CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']
 
     def __init__(self, plugin_name: str, config: dict):
         super().__init__(
@@ -16,7 +18,7 @@ class Monitoring(BasePluginUse):
                 args=config['plugin_args'] if 'plugin_args' in config else '',
             )
         )
-        self.interval = config['interval'] if 'interval' in config else CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']
+        self._set_attr(data=config, attr='interval')
 
-    def check(self):
+    def check(self) -> bool:
         return self.plugin.check()

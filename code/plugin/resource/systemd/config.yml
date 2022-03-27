@@ -17,3 +17,9 @@ active:
 init:
   exec: '/bin/bash init.sh'  # tasks to run when the service gets initialized
   args: 1
+
+modes:
+  valid:
+  - 'active-standby'
+  - 'standalone'
+  fallback: 'active-standby'

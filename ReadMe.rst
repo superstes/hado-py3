@@ -1,8 +1,11 @@
-.. |docs_badge| image:: https://readthedocs.org/projects/hado-python3/badge/?version=latest
+.. |badge_docs| image:: https://readthedocs.org/projects/hado-py3/badge/?version=latest
+.. |badge_test| image:: https://github.com/superstes/hado-py3/actions/workflows/tests/badge.svg
 
 ********************************
 HA-DO - SIMPLE Clustering Engine
 ********************************
+
+|badge_test| | |badge_docs|
 
 Work-in-progress
 ################
@@ -28,20 +31,21 @@ I want to code an alternative to it.
 Goals
 #####
 
-KEEP IT SIMPLE
-**************
+1. KEEP IT SIMPLE
+*****************
 
 Admins should be able to understand and troubleshoot the system after a few minutes.
 
 Functionality can be added using `plugins <https://github.com/superstes/hado-python3/blob/main/Plugins.rst>`_. Allowing for advanced usage without increasing the core engines complexity.
 
-Platform
-********
+2. Platform
+***********
 
 Initially this solution will only target **systems that use systemd** as init.
 
-Functionality
-*************
+
+3. Functionality
+****************
 
 CORE
 ====
@@ -85,12 +89,12 @@ Keeping the footprint of the base-engine small - you can add plugins as needed.
 
   The structure of such a plugin should be logic.
 
-
-Transparency
-************
+4. Transparency
+***************
 
 The functionality of the core should be logic and easily understandable and to troubleshoot.
 
+----
 
 Not really Goals
 ################
@@ -108,6 +112,6 @@ Documentation
 
 Documentation is very important to us as it enables it's usage.
 
-|docs_badge|
+|badge_docs|
 
 You can find the documentation here: `Read the docs <https://hado.superstes.eu>`_

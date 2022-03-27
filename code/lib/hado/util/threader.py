@@ -2,8 +2,8 @@
 # base code source: https://github.com/sankalpjonn/timeloop
 # modified for use in HA-DO
 
-from ..util.debug import log
-from ..core.config import CONFIG_ENGINE
+from hado.util.debug import log
+from hado.core.config.shared import CONFIG_ENGINE
 
 from threading import Thread, Event
 from time import sleep as time_sleep

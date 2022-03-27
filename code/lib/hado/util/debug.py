@@ -1,4 +1,4 @@
-from ..core.config import CONFIG_ENGINE
+from hado.core.config.shared import CONFIG_ENGINE
 
 
 def log(msg: str, prefix: str = 'ERROR'):
