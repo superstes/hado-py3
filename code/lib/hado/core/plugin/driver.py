@@ -3,10 +3,11 @@
 
 from hado.util.process import subprocess
 from hado.util.debug import log
+from hado.core.config.defaults import HARDCODED
 
 from enum import Enum
 from yaml import safe_load as yaml_load
-from os import path as os_path
+from pathlib import Path
 
 
 class PluginType(Enum):
@@ -15,8 +16,8 @@ class PluginType(Enum):
 
 
 plugin_desc = {
-    PluginType.monitoring: 'Monitoring',
-    PluginType.resource: 'Resource',
+    PluginType.monitoring: 'monitoring',
+    PluginType.resource: 'resource',
 }
 
 plugin_cmds = {
@@ -31,8 +32,8 @@ plugin_cmd_timeouts = {
 
 
 class Plugin:
-    def __init__(self, plugin_type: PluginType, base: str, name: str, args: str):
-        self.BASE = f"{base}/{name}"
+    def __init__(self, plugin_type: PluginType, name: str, args: str):
+        self.BASE = f"{HARDCODED['PATH_PLUGIN']}/{plugin_desc[plugin_type]}/{name}"
         self.NAME = name
         self.TYPE = plugin_type
         self.ARGS = args.split(' ')
@@ -41,17 +42,17 @@ class Plugin:
         self._load_config()
         self.CMDS = []
         self._get_cmds()
-        self.log_id = f"Plugin - {plugin_desc[self.TYPE]} {self.NAME} -"
+        self.log_id = f"Plugin - {plugin_desc[self.TYPE].capitalize()} {self.NAME} -"
         self._check_plugin()
 
     def _check_plugin(self):
-        if not os_path.isdir(self.BASE):
+        if not Path(self.BASE).is_dir():
             raise NotADirectoryError(f"ERROR: {self.log_id} Plugin directory was not found: '{self.BASE}'")
 
         self._get_cmds()
 
     def _load_config(self):
-        if os_path.isfile(self.CONFIG_FILE):
+        if Path(self.CONFIG_FILE).is_file():
             with open(self.CONFIG_FILE, 'r') as cnf:
                 self.CONFIG = yaml_load(cnf.read())
 

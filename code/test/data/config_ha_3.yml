@@ -1,0 +1,78 @@
+---
+
+# data to test monitoring validation
+
+a:  # minimal OK
+  apps:
+    test:
+      monitoring:
+        test_ping:
+          plugin: '_test3'
+          plugin_args: 'placeholder'
+          interval: 2
+          _test: 'a'
+  _TEST: true
+  _TEST_NSTDOUT: 'ERROR|WARNING|INFO'
+
+b:  # minimal fail
+  apps:
+    test:
+      monitoring:
+        test_ping:
+          _test: 'b'
+  _TEST: false
+  _TEST_STDOUT: 'ERROR'
+
+c:  # invalid plugin
+  apps:
+    test:
+      monitoring:
+        test_ping:
+          plugin: 'doesNotExit'
+          _test: 'c'
+  _TEST: false
+  _TEST_STDOUT: 'ERROR'
+
+d:  # no arguments when they are needed
+  apps:
+    test:
+      monitoring:
+        test_ping:
+          plugin: '_test3'
+          _test: 'd'
+  _TEST: false
+  _TEST_STDOUT: 'ERROR'
+
+e:  # too few arguments
+  apps:
+    test:
+      monitoring:
+        test_ping:
+          plugin: '_test1'
+          plugin_args: 'placeholder'
+          _test: 'e'
+  _TEST: false
+  _TEST_STDOUT: 'ERROR'
+
+f:  # no arguments when none are needed
+  apps:
+    test:
+      monitoring:
+        test_ping:
+          plugin: '_test2'
+          interval: 2
+          _test: 'f'
+  _TEST: true
+  _TEST_STDOUT: 'INFO'
+  _TEST_NSTDOUT: 'ERROR|WARNING'
+
+g:  # no interval
+  apps:
+    test:
+      monitoring:
+        test_ping:
+          plugin: '_test2'
+          _test: 'g'
+  _TEST: true
+  _TEST_STDOUT: 'INFO'
+  _TEST_NSTDOUT: 'ERROR|WARNING'

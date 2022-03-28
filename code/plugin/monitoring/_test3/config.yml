@@ -1,0 +1,7 @@
+---
+
+description: "test monitoring-plugin #3"
+
+check:
+  exec: '/bin/bash check.sh'  # start the monitoring check
+  args: 1

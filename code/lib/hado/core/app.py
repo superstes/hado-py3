@@ -1,7 +1,7 @@
 from hado.util.debug import log
 from hado.core.config.shared import CONFIG_ENGINE
-from hado.core.resource import Resource
-from hado.core.monitoring import Monitoring
+from hado.core.plugin.resource import Resource
+from hado.core.plugin.monitoring import Monitoring
 
 
 class App:

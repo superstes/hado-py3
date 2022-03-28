@@ -1,6 +1,6 @@
 ---
 
-description: "-i: the ip address (pe: '-i=10.10.4.2'), -d: device to add the ip to (pe: '-d=eno1')"
+description: "test resource-plugin #3"
 
 start:
   exec: '/bin/bash start.sh'  # start the resource

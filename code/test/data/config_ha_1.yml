@@ -1,5 +1,7 @@
 ---
 
+# data to test basic ha-config validation
+
 a:  # minimal OK
   apps:
     test:
@@ -7,6 +9,7 @@ a:  # minimal OK
     monitoring:
       test:
   _TEST: true
+  _TEST_NSTDOUT: 'ERROR|WARNING'
 
 b:  # minimal fail
   _TEST: false
@@ -37,18 +40,3 @@ f:  # fail if apps only contains empty-string
   apps: ''
   _TEST: false
   _TEST_STDOUT: 'ERROR'
-
-#x:
-#  apps:
-#    fancy:
-#      description: Test A - minimal OK
-#      resources:
-#        ip:
-#          plugin: ipaddr
-#          plugin_args: -i=127.0.1.1 -d=lo
-#
-#      peers:
-#        host: 127.0.1.2
-#
-#  system:
-#    listen: 127.0.1.1

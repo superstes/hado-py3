@@ -5,6 +5,7 @@ from hado.core.config.validate import validate
 from hado.core.config.defaults import HARDCODED
 from hado.core.app import App
 from hado.util.helper import value_exists
+from hado.core.plugin.util import existing_plugins, max_plugin_args, enough_args, supported_mode
 
 
 class DeserializeConfig:
@@ -13,6 +14,7 @@ class DeserializeConfig:
         self.CONFIG_HA = config_ha
         self.CONFIG_ENGINE = config_engine
         self.LOADED = {'app': [], 'system': None, 'peer': []}
+        self.PLUGINS = existing_plugins()
 
     def get(self) -> dict:
         if not self._check_engine():
@@ -38,6 +40,16 @@ class DeserializeConfig:
 
         return self.LOADED
 
+    def _check_engine(self) -> bool:
+        ok = True
+
+        for s, v in self.CONFIG_ENGINE.items():
+            if not validate(item=s, data=v):
+                log(f"Engine has an invalid '{s}' configured - valid: '{validate(s)}'!")
+                ok = False
+
+        return ok
+
     def _check_ha(self) -> bool:
         if not value_exists(data=self.CONFIG_HA, key='apps'):
             log("No 'apps' config found - exiting!")
@@ -50,16 +62,6 @@ class DeserializeConfig:
             log("No 'system.monitoring' config found - skipping system health monitoring!", 'WARNING')
 
         return True
-
-    def _check_engine(self) -> bool:
-        ok = True
-
-        for s, v in self.CONFIG_ENGINE.items():
-            if not validate(item=s, data=v):
-                log(f"Engine has an invalid '{s}' configured - valid: '{validate(s)}'!")
-                ok = False
-
-        return ok
 
     def _check_app(self, name: str, app: dict) -> bool:
         log(f"Checking config for app '{name}'.", 'INFO')
@@ -111,8 +113,22 @@ class DeserializeConfig:
             log(f"Resource '{name}' has no plugin configured!")
             return False
 
+        if res['plugin'] not in self.PLUGINS['resource']:
+            log(f"Resource '{name}' has an non-existent plugin configured!")
+            return False
+
+        plugin = res['plugin']
         if not value_exists(data=res, key='plugin_args'):
-            log(f"Resource '{name}' has no plugin-arguments configured!", 'WARNING')
+            if max_plugin_args(t='resource', p=plugin) != 0:
+                log(f"Resource '{name}' has required plugin-arguments not configured!")
+                return False
+
+            log(f"Resource '{name}' has no plugin-arguments configured!", 'INFO')
+
+        else:
+            if not enough_args(args=res['plugin_args'], t='resource', p=plugin):
+                log(f"Resource '{name}' has too few plugin-arguments configured!")
+                return False
 
         if not value_exists(data=res, key='vital'):
             log(f"Resource '{name}' has no vitality configured - using default: '{self.CONFIG_ENGINE['DEFAULT_RESOURCE_VITAL']}'!", 'INFO')
@@ -130,6 +146,17 @@ class DeserializeConfig:
                 log(f"Resource '{name}' has an invalid mode configured - valid: '{validate('DEFAULT_RESOURCE_MODE')}'!")
                 return False
 
+            else:
+                mode_supported, mode_fallback = supported_mode(m=res['mode'], t='resource', p=plugin)
+
+                if not mode_supported:
+                    if mode_fallback is not None:
+                        log(f"Resource '{name}' has an unsupported mode configured - using fallback: '{mode_fallback}'.", 'WARNING')
+
+                    else:
+                        log(f"Resource '{name}' has an unsupported mode configured!")
+                        return False
+
         return True
 
     def _check_monitoring(self, name: str, mon: dict) -> bool:
@@ -137,11 +164,27 @@ class DeserializeConfig:
             log(f"Monitoring '{name}' has no plugin configured!")
             return False
 
+        if mon['plugin'] not in self.PLUGINS['monitoring']:
+            log(f"Monitoring '{name}' has an non-existent plugin configured!")
+            return False
+
+        plugin = mon['plugin']
         if not value_exists(data=mon, key='plugin_args'):
-            log(f"Monitoring '{name}' has no plugin-arguments configured!", 'WARNING')
+            if max_plugin_args(t='monitoring', p=plugin) != 0:
+                log(f"Monitoring '{name}' has no plugin-arguments configured!", 'ERROR')
+                return False
+
+            log(f"Monitoring '{name}' has no plugin-arguments configured!", 'INFO')
+
+        else:
+            if not enough_args(args=mon['plugin_args'], t='monitoring', p=plugin):
+                log(f"Monitoring '{name}' has too few plugin-arguments configured!")
+                return False
 
         if not value_exists(data=mon, key='interval'):
             log(f"Monitoring '{name}' has no interval configured - using default: '{self.CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']}'!", 'INFO')
+
+        return True
 
     def _check_peer(self, name: str, peer: dict) -> bool:
         if not value_exists(data=peer, key='host'):

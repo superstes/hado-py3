@@ -1,7 +1,5 @@
-from hado.util.debug import log
 from hado.core.config.shared import CONFIG_ENGINE
-from hado.core.config.defaults import HARDCODED
-from hado.core.plugin import Plugin, PluginType, BasePluginUse
+from hado.core.plugin.driver import Plugin, PluginType, BasePluginUse
 
 
 class Resource(BasePluginUse):
@@ -16,7 +14,6 @@ class Resource(BasePluginUse):
             vital=config['vital'] if 'vital' in config else CONFIG_ENGINE['DEFAULT_RESOURCE_VITAL'],
             plugin=Plugin(
                 plugin_type=self.plugin_type,
-                base=f"{HARDCODED['PATH_PLUGIN']}/resource",
                 name=plugin_name,
                 args=config['plugin_args'],
             )

@@ -1,0 +1,49 @@
+---
+
+# data to test app validation
+
+a:  # minimal OK
+  apps:
+    test:
+      resources:
+        test_ip:
+          plugin: ipaddr
+          plugin_args: -i=127.0.1.1 -d=lo
+      monitoring:
+        test: none
+      peers:
+        host: 127.0.1.2
+
+#  system:
+#    listen: 127.0.1.1
+  _TEST: true
+
+#b:  # minimal fail
+#  _TEST: false
+#  _TEST_STDOUT: 'ERROR'
+#
+#c:  # warning on system & monitoring
+#  apps:
+#    test:
+#  _TEST: true
+#  _TEST_STDOUT: 'WARNING'
+#  _TEST_NSTDOUT: 'ERROR'
+#
+#d:  # fail if apps empty
+#  apps:
+#  _TEST: false
+#  _TEST_STDOUT: 'ERROR'
+#
+#e:  # warning on monitoring
+#  apps:
+#    test:
+#  system:
+#    test:
+#  _TEST: true
+#  _TEST_STDOUT: 'WARNING'
+#  _TEST_NSTDOUT: 'ERROR'
+#
+#f:  # fail if apps only contains empty-string
+#  apps: ''
+#  _TEST: false
+#  _TEST_STDOUT: 'ERROR'
