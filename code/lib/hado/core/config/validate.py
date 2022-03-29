@@ -14,7 +14,9 @@ VALIDATION = {
 }
 
 
-def validate(item: str, data: (int, str, bool) = None) -> (bool, str):
+def validate(item: str, data: (int, str, bool)=None) -> (bool, str):
+    # pylint: disable=R0911,R0912
+
     if item in VALIDATION:
         c = VALIDATION[item]['check']
         d = VALIDATION[item]['data']
@@ -36,7 +38,7 @@ def validate(item: str, data: (int, str, bool) = None) -> (bool, str):
                     return True
 
             elif c == 'type':
-                if type(data) == d:
+                if isinstance(data, d):
                     return True
 
         except ValueError:

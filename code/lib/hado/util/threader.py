@@ -2,8 +2,7 @@
 # base code source: https://github.com/sankalpjonn/timeloop
 # modified for use in HA-DO
 
-from hado.util.debug import log
-from hado.core.config.shared import CONFIG_ENGINE
+# pylint: disable=W0702, R0913
 
 from threading import Thread, Event
 from time import sleep as time_sleep
@@ -11,9 +10,15 @@ from datetime import timedelta
 from sys import exc_info as sys_exc_info
 from traceback import format_exc
 
+from hado.util.debug import log
+from hado.core.config.shared import CONFIG_ENGINE
+
 
 class Workload(Thread):
-    def __init__(self, sleep: timedelta, execute, data, loop_instance, name: str, description: str, once: bool = False, daemon: bool = True):
+    def __init__(
+            self, sleep: timedelta, execute, data, loop_instance, name: str,
+            description: str, once: bool = False, daemon: bool = True
+    ):
         Thread.__init__(self, daemon=daemon, name=name)
         self.sleep = sleep
         self.execute = execute  # function to execute
@@ -63,7 +68,7 @@ class Workload(Thread):
         except:
             self.fail_count += 1
             exc_type, exc_obj, _ = sys_exc_info()
-            log(f"Thread {self.log_name} failed with error: \"{exc_type} - {exc_obj}\"", level=1)
+            log(f"Thread {self.log_name} failed with error: \"{exc_type} - {exc_obj}\"")
             log(f"{format_exc(limit=CONFIG_ENGINE['TRACEBACK_LINES'])}", 'ERROR')
 
             if not self.once:
@@ -81,7 +86,10 @@ class Loop:
         for job in self.jobs:
             job.start()
 
-    def add_thread(self, sleep_time: int, thread_data, description: str, once: bool = False, daemon: bool = True):
+    def add_thread(
+            self, sleep_time: int, thread_data, description: str,
+            once: bool = False, daemon: bool = True
+    ):
         log(f"Adding thread for \"{description}\" with interval \"{sleep_time}\"", 'DEBUG')
         self.thread_nr += 1
 

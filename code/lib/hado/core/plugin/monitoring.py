@@ -6,12 +6,17 @@ class Monitoring(BasePluginUse):
     plugin_type = PluginType.monitoring
     interval = CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']
 
-    def __init__(self, plugin_name: str, config: dict):
+    def __init__(self, config: dict):
+        if 'vital' in config:
+            v = config['vital']
+        else:
+            v = CONFIG_ENGINE['DEFAULT_MONITORING_VITAL']
+
         super().__init__(
-            vital=config['vital'] if 'vital' in config else CONFIG_ENGINE['DEFAULT_MONITORING_VITAL'],
+            vital=v,
             plugin=Plugin(
                 plugin_type=self.plugin_type,
-                name=plugin_name,
+                name=config['plugin'],
                 args=config['plugin_args'] if 'plugin_args' in config else '',
             )
         )
@@ -19,3 +24,6 @@ class Monitoring(BasePluginUse):
 
     def check(self) -> bool:
         return self.plugin.check()
+
+    def __repr__(self):
+        return f"HA-DO MONITORING: {self.__dict__}"

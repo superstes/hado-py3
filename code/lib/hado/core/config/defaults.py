@@ -38,4 +38,5 @@ HARDCODED = {
     'ACTION': {
         'VALID': ['stop', 'demote', 'leave'],
     },
+    'REGEX_DNS': r'(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\.)+[a-zA-Z]{2,63}$)',
 }

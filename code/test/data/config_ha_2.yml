@@ -6,12 +6,11 @@ a:  # minimal OK
   apps:
     test:
       resources:
-        test_ip:
+        test_ip_a:
           plugin: '_test3'
-          plugin_args: '-i=127.0.1.1 -d=lo'
+          plugin_args: 'p1 p2'
           vital: true
           mode: 'as'
-          _test: 'a'
   _TEST: true
   _TEST_NSTDOUT: 'ERROR|WARNING|INFO'
 
@@ -19,8 +18,8 @@ b:  # minimal fail
   apps:
     test:
       resources:
-        test_ip:
-          _test: 'b'
+        test_ip_b:
+          _placeholder: ''
   _TEST: false
   _TEST_STDOUT: 'ERROR'
 
@@ -28,9 +27,8 @@ c:  # invalid plugin
   apps:
     test:
       resources:
-        test_ip:
+        test_ip_c:
           plugin: 'doesNotExit'
-          _test: 'c'
   _TEST: false
   _TEST_STDOUT: 'ERROR'
 
@@ -38,9 +36,8 @@ d:  # no arguments when they are needed
   apps:
     test:
       resources:
-        test_ip:
+        test_ip_d:
           plugin: '_test3'
-          _test: 'd'
   _TEST: false
   _TEST_STDOUT: 'ERROR'
 
@@ -48,10 +45,9 @@ e:  # too few arguments
   apps:
     test:
       resources:
-        test_ip:
+        test_ip_e:
           plugin: '_test3'
           plugin_args: 'placeholder'
-          _test: 'e'
   _TEST: false
   _TEST_STDOUT: 'ERROR'
 
@@ -59,11 +55,10 @@ f:  # no arguments when none are needed
   apps:
     test:
       resources:
-        test_ip:
+        test_ip_f:
           plugin: '_test1'
           vital: true
           mode: 'as'
-          _test: 'f'
   _TEST: true
   _TEST_STDOUT: 'INFO'
   _TEST_NSTDOUT: 'ERROR|WARNING'
@@ -72,11 +67,10 @@ g:  # no vitality
   apps:
     test:
       resources:
-        test_ip:
+        test_ip_g:
           plugin: '_test3'
           plugin_args: 'p1 p2'
           mode: 'as'
-          _test: 'g'
   _TEST: true
   _TEST_STDOUT: 'INFO'
   _TEST_NSTDOUT: 'ERROR|WARNING'
@@ -85,12 +79,11 @@ h:  # invalid mode
   apps:
     test:
       resources:
-        test_ip:
+        test_ip_h:
           plugin: '_test3'
           plugin_args: 'p1 p2'
           mode: 'doesNotExist'
           vital: true
-          _test: 'h'
   _TEST: false
   _TEST_STDOUT: 'ERROR'
 
@@ -98,12 +91,11 @@ i:  # unsupported mode if fallback is provided by plugin
   apps:
     test:
       resources:
-        test_ip:
+        test_ip_i:
           plugin: '_test1'
           plugin_args: 'placeholder'
           mode: 'as'
           vital: true
-          _test: 'i'
   _TEST: true
   _TEST_STDOUT: 'WARNING'
   _TEST_NSTDOUT: 'ERROR|INFO'
@@ -112,11 +104,10 @@ j:  # unsupported mode without fallback
   apps:
     test:
       resources:
-        test_ip:
+        test_ip_j:
           plugin: '_test2'
           plugin_args: '-i=127.0.1.1 -d=lo'
           mode: 'as'
           vital: true
-          _test: 'j'
   _TEST: false
   _TEST_STDOUT: 'ERROR'

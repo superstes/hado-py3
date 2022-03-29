@@ -23,18 +23,18 @@
 #   (export PYTHONPATH=/var/lib/hado)
 #   it's being set automatically by the systemd service
 
+import signal
+from traceback import format_exc
+from pathlib import Path
+from time import time
+from time import sleep as time_sleep
+from sys import exc_info as sys_exc_info
+from yaml import safe_load as yaml_load
+
 from hado.util.threader import Loop as Thread
 from hado.util.debug import log
 from hado.core.config.defaults import HARDCODED
 from hado.core.config.dump import dump_defaults
-
-from yaml import safe_load as yaml_load
-from os import path as os_path
-from time import sleep as time_sleep
-from time import time
-from sys import exc_info as sys_exc_info
-from traceback import format_exc
-import signal
 
 
 class Service:
@@ -62,14 +62,16 @@ class Service:
 
         self._run()
 
-    def stop(self, signum=None, stack=None):
+    @staticmethod
+    def stop(signum=None, stack=None):
         log(f"Service received signal {signum}", 'WARNING')
         raise SystemExit('Service exited.')
 
     def _init_config(self):
+        # pylint: disable=W0611,C0415
         dump_defaults()
 
-        if os_path.isfile(HARDCODED['CONFIG_HA']):
+        if Path(HARDCODED['CONFIG_HA']).is_file():
             with open(HARDCODED['CONFIG_HA'], 'r') as cnf:
                 self.CONFIG_HA = yaml_load(cnf.read())
 
@@ -80,7 +82,7 @@ class Service:
             CONFIG_ENGINE = self.CONFIG_ENGINE
             CONFIG_LOADED = self.CONFIG_LOADED
 
-            if os_path.isfile(HARDCODED['CONFIG_ENGINE']):
+            if Path(HARDCODED['CONFIG_ENGINE']).is_file():
                 with open(HARDCODED['CONFIG_HA'], 'r') as cnf:
                     self.CONFIG_ENGINE.update(yaml_load(cnf.read()))
 
@@ -119,6 +121,7 @@ class Service:
             log(f"Detailed info on running threads:\n{detailed_thread_list}", 'DEBUG')
 
     def _run(self):
+        # pylint: disable=W0702
         try:
             log('Entering service runtime')
             run_last_status_time = time()

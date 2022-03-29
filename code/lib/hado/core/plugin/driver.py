@@ -1,13 +1,14 @@
 # handles plugin interaction
 #   hado ichimonji
 
+from enum import Enum
+from pathlib import Path
+from yaml import safe_load as yaml_load
+
 from hado.util.process import subprocess
 from hado.util.debug import log
 from hado.core.config.defaults import HARDCODED
-
-from enum import Enum
-from yaml import safe_load as yaml_load
-from pathlib import Path
+from hado.core.config.shared import CONFIG_ENGINE
 
 
 class PluginType(Enum):
@@ -22,7 +23,10 @@ plugin_desc = {
 
 plugin_cmds = {
     PluginType.monitoring: ['check'],
-    PluginType.resource: ['start', 'stop', 'active', 'other', 'init', 'fix', 'promote', 'demote', 'leader']
+    PluginType.resource: [
+        'start', 'stop', 'active', 'other', 'init',
+        'fix', 'promote', 'demote', 'leader'
+    ]
 }
 
 plugin_cmd_timeouts = {
@@ -39,15 +43,17 @@ class Plugin:
         self.ARGS = args.split(' ')
         self.CONFIG_FILE = f"{self.BASE}/config.yml"
         self.CONFIG = {}
+        self.log_id = f"Plugin - {plugin_desc[self.TYPE].capitalize()} {self.NAME} -"
         self._load_config()
         self.CMDS = []
         self._get_cmds()
-        self.log_id = f"Plugin - {plugin_desc[self.TYPE].capitalize()} {self.NAME} -"
         self._check_plugin()
 
     def _check_plugin(self):
         if not Path(self.BASE).is_dir():
-            raise NotADirectoryError(f"ERROR: {self.log_id} Plugin directory was not found: '{self.BASE}'")
+            raise NotADirectoryError(
+                f"ERROR: {self.log_id} Plugin directory was not found: '{self.BASE}'"
+            )
 
         self._get_cmds()
 
@@ -57,7 +63,9 @@ class Plugin:
                 self.CONFIG = yaml_load(cnf.read())
 
         else:
-            raise ValueError(f"ERROR: {self.log_id} Unable to load config from file: '{self.CONFIG_FILE}'")
+            raise ValueError(
+                f"ERROR: {self.log_id} Unable to load config from file: '{self.CONFIG_FILE}'"
+            )
 
     def _get_cmds(self):
         for cmd in plugin_cmds[self.TYPE]:
@@ -77,6 +85,8 @@ class Plugin:
         elif s == 3:
             log(f"{self.log_id} Command type '{t}' not supported!", 'DEBUG')
 
+        return False
+
     def _get_cmd(self, t: str) -> str:
         cnf_exec = self.CONFIG[t]['exec']
         cnf_arg_nr = self.CONFIG[t]['args']
@@ -84,15 +94,21 @@ class Plugin:
         e_bin = ''
 
         if len(self.ARGS) < cnf_arg_nr:
-            raise ValueError(f"ERROR: {self.log_id} Not enough arguments provided: configured {cnf_arg_nr} / got {len(self.ARGS)}!")
+            raise ValueError(
+                f"ERROR: {self.log_id} Not enough arguments provided: "
+                f"configured {cnf_arg_nr} / got {len(self.ARGS)}!"
+            )
 
         e = cnf_exec.split(' ', 1)
 
         if len(e) == 2:
             _bin = e[1]
 
-            if not os_path.isfile(_bin):
-                raise FileNotFoundError(f"ERROR: {self.log_id} Binary to execute was not found: '{_bin}'")
+            if not Path(_bin).is_file():
+                raise FileNotFoundError(
+                    f"ERROR: {self.log_id} Binary to execute "
+                    f"was not found: '{_bin}'"
+                )
 
             e_bin = f"{e[1]} "
             e_exe = e[2]
@@ -103,8 +119,10 @@ class Plugin:
         if e_exe.find('/') == -1:
             e_exe = f"{self.BASE}/{e_exe}"
 
-        if not os_path.isfile(e_exe):
-            raise FileNotFoundError(f"ERROR: {self.log_id} Executable was not found: '{e_exe}'")
+        if not Path(e_exe).is_file():
+            raise FileNotFoundError(
+                f"ERROR: {self.log_id} Executable was not found: '{e_exe}'"
+            )
 
         if len(self.ARGS) > 0:
             e_args = f" {' '.join(self.ARGS)}"
@@ -113,6 +131,7 @@ class Plugin:
 
         return f"{e_bin}{e_exe}{e_args}"
 
+    # pylint: disable=R0913
     def _exec(self, t: str,
               cno: bool = False,
               ca: bool = False, cna: bool = False,
@@ -204,7 +223,10 @@ class Plugin:
             return True
 
         elif stdout != "0":
-            log(f"{self.log_id} Got unexpected result from execution (expected '0' or '1'): '{stdout}'", 'WARNING')
+            log(
+                f"{self.log_id} Got unexpected result from execution "
+                f"(expected '0' or '1'): '{stdout}'", 'WARNING'
+            )
 
         return False
 
@@ -215,6 +237,8 @@ class Plugin:
             log(f"{self.log_id} running monitoring task.", 'DEBUG')
             return self._stdout_ok(self._exec(t))
 
+        return False
+
     @property
     def is_active(self) -> bool:
         # if resource is active
@@ -222,6 +246,8 @@ class Plugin:
         if self._check_cmd_support(t=t, s=1):
             log(f"{self.log_id} checking if active.", 'DEBUG')
             return self._stdout_ok(self._exec(t))
+
+        return False
 
     @property
     def is_other(self) -> bool:
@@ -231,6 +257,8 @@ class Plugin:
             log(f"{self.log_id} checking if other is active.", 'DEBUG')
             return self._stdout_ok(self._exec(t))
 
+        return False
+
     @property
     def is_leader(self) -> bool:
         # check if this node is the leader in a resource cluster
@@ -238,6 +266,11 @@ class Plugin:
         if self._check_cmd_support(t=t, s=3):
             log(f"{self.log_id} checking leader state.", 'DEBUG')
             return self._stdout_ok(self._exec(t))
+
+        return False
+
+    def __repr__(self):
+        return f"HA-DO PLUGIN: {self.__dict__}"
 
 
 class BasePluginUse:

@@ -1,0 +1,83 @@
+---
+
+# data to test peer validation
+
+a:  # minimal OK (valid ipv4)
+  apps:
+    test:
+      peers:
+        test_peer_a:
+          host: '127.0.1.2'
+          port: 6666
+  _TEST: true
+  _TEST_NSTDOUT: 'ERROR|WARNING|INFO'
+
+b:  # minimal fail
+  apps:
+    test:
+      peers:
+        test_peer_b:
+          _placeholder: ''
+  _TEST: false
+  _TEST_STDOUT: 'ERROR'
+
+c:  # invalid host (neither ip nor dns)
+  apps:
+    test:
+      peers:
+        test_peer_c:
+          host: 'doesNotExist'
+  _TEST: false
+  _TEST_STDOUT: 'ERROR'
+
+d:  # valid ipv6
+  apps:
+    test:
+      peers:
+        test_peer_d:
+          host: '2001:0db8:0000:0000:0000:ff00:0042:8329'
+          port: 6666
+  _TEST: true
+  _TEST_NSTDOUT: 'ERROR|WARNING|INFO'
+
+e:  # valid dns hostname
+  apps:
+    test:
+      peers:
+        test_peer_e:
+          host: 'localhost.localhost'
+          port: 6666
+  _TEST: true
+  _TEST_NSTDOUT: 'ERROR|WARNING|INFO'
+
+f:  # no port provided
+  apps:
+    test:
+      peers:
+        test_peer_f:
+          host: '127.0.1.2'
+  _TEST: true
+  _TEST_STDOUT: 'INFO'
+  _TEST_NSTDOUT: 'ERROR|WARNING'
+
+g:  # invalid port
+  apps:
+    test:
+      peers:
+        test_peer_g:
+          host: '127.0.1.2'
+          port: 21
+  _TEST: false
+  _TEST_STDOUT: 'ERROR'
+  _TEST_NSTDOUT: 'INFO|WARNING'
+
+h:  # hostname that is valid but can't be resolved
+  apps:
+    test:
+      peers:
+        test_peer_h:
+          host: 'test.thisisnotadomain-------------uwu.org'
+          port: 6666
+  _TEST: false
+  _TEST_STDOUT: 'ERROR'
+  _TEST_NSTDOUT: 'INFO|WARNING'

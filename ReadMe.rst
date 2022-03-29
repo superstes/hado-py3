@@ -10,6 +10,10 @@ HA-DO - SIMPLE Clustering Engine
    :target: https://hado.superstes.eu
    :alt: Documentation
 
+.. image:: https://github.com/superstes/hado-py3/actions/workflows/lint.yaml/badge.svg
+   :target: https://github.com/superstes/hado-py3/actions/workflows/lint.yaml
+   :alt: Linting
+
 Work-in-progress
 ################
 

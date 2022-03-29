@@ -1,17 +1,20 @@
 # process handler
 
-from hado.util.debug import log
-from hado.core.config.shared import CONFIG_ENGINE
-
 from subprocess import Popen as subprocessPopen
 from subprocess import PIPE as SUBPROCESS_PIPE
 from subprocess import TimeoutExpired
 
+from hado.util.debug import log
+from hado.core.config.shared import CONFIG_ENGINE
 
-def subprocess(cmd: (list, str), timeout: int = CONFIG_ENGINE['PROCESS_TIMEOUT_MONITORING']) -> str:
+
+def subprocess(
+        cmd: (list, str),
+        timeout: int = CONFIG_ENGINE['PROCESS_TIMEOUT_MONITORING']
+) -> str:
     log(f"Executing command \"{cmd}\"", 'DEBUG')
 
-    if type(cmd) != list:
+    if not isinstance(cmd, list):
         cmd = [cmd]
 
     try:
@@ -34,6 +37,9 @@ def subprocess(cmd: (list, str), timeout: int = CONFIG_ENGINE['PROCESS_TIMEOUT_M
         log(f"Process output: \"{stdout}\"", 'DEBUG')
 
     else:
-        log(f"Got error while processing command \"{cmd}\": exit-code {exit_code} - \"{stderr}\" | output: \"{stdout}\"")
+        log(
+            f"Got error while processing command \"{cmd}\": "
+            f"exit-code {exit_code} - \"{stderr}\" | output: \"{stdout}\""
+        )
 
     return stdout

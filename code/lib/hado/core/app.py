@@ -15,9 +15,8 @@ class App:
 
         self.resources = []
         next_seq = self._get_highest_sequence(app['resources']) + 1
-        for name, res in app['resources'].items():
+        for res in app['resources'].values():
             self.resources.append(Resource(
-                plugin_name=name,
                 config=res,
                 sequence=res['sequence'] if 'sequence' in res else next_seq,
             ))
@@ -26,11 +25,8 @@ class App:
 
         self.monitoring = []
         if 'monitoring' in app:
-            for name, mon in app['monitoring'].items():
-                self.monitoring.append(Monitoring(
-                    plugin_name=name,
-                    config=mon,
-                ))
+            for mon in app['monitoring'].values():
+                self.monitoring.append(Monitoring(config=mon))
 
         self._set_attr(data=app, attr='on_failure')
         self._set_attr(data=app, attr='on_shutdown')
@@ -135,3 +131,6 @@ class App:
                 seqs.append(int(res['sequence']))
 
         return max(seqs)
+
+    def __repr__(self):
+        return f"HA-DO APP: {self.__dict__}"

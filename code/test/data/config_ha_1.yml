@@ -8,22 +8,26 @@ a:  # minimal OK
   system:
     monitoring:
       test:
+  _test: 'a'
   _TEST: true
   _TEST_NSTDOUT: 'ERROR|WARNING'
 
 b:  # minimal fail
+  _test: 'b'
   _TEST: false
   _TEST_STDOUT: 'ERROR'
 
 c:  # warning on system & monitoring
   apps:
     test:
+  _test: 'c'
   _TEST: true
   _TEST_STDOUT: 'WARNING'
   _TEST_NSTDOUT: 'ERROR'
 
 d:  # fail if apps empty
   apps:
+  _test: 'd'
   _TEST: false
   _TEST_STDOUT: 'ERROR'
 
@@ -32,11 +36,13 @@ e:  # warning on monitoring
     test:
   system:
     test:
+  _test: 'e'
   _TEST: true
   _TEST_STDOUT: 'WARNING'
   _TEST_NSTDOUT: 'ERROR'
 
 f:  # fail if apps only contains empty-string
   apps: ''
+  _test: 'f'
   _TEST: false
   _TEST_STDOUT: 'ERROR'

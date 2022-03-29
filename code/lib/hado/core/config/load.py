@@ -6,6 +6,7 @@ from hado.core.config.defaults import HARDCODED
 from hado.core.app import App
 from hado.util.helper import value_exists
 from hado.core.plugin.util import existing_plugins, max_plugin_args, enough_args, supported_mode
+from hado.core.config.util import valid_host
 
 
 class DeserializeConfig:
@@ -13,7 +14,11 @@ class DeserializeConfig:
         # note: not using global vars as this makes testing easier
         self.CONFIG_HA = config_ha
         self.CONFIG_ENGINE = config_engine
-        self.LOADED = {'app': [], 'system': None, 'peer': []}
+        self.LOADED = {
+            'apps': [],
+            'system': None,  # system settings
+            'peers': []  # global peers
+        }
         self.PLUGINS = existing_plugins()
 
     def get(self) -> dict:
@@ -32,9 +37,9 @@ class DeserializeConfig:
             app['peers'] = glob_peers | app['peers'] if 'peers' in app else {}
 
             if self._check_app(name=name, app=app):
-                self.LOADED['app'].append(App(name=name, app=app))
+                self.LOADED['apps'].append(App(name=name, app=app))
 
-        if not value_exists(data=self.LOADED, key='app'):
+        if not value_exists(data=self.LOADED, key='apps'):
             log('No app could be loaded - exiting!')
             raise ValueError
 
@@ -56,14 +61,21 @@ class DeserializeConfig:
             return False
 
         if not value_exists(data=self.CONFIG_HA, key='system'):
-            log("No 'system' config found - using defaults and skipping system health monitoring!", 'WARNING')
+            log(
+                "No 'system' config found - using defaults and skipping system health monitoring!",
+                'WARNING'
+            )
 
         elif not value_exists(data=self.CONFIG_HA['system'], key='monitoring'):
-            log("No 'system.monitoring' config found - skipping system health monitoring!", 'WARNING')
+            log(
+                "No 'system.monitoring' config found - skipping system health monitoring!",
+                'WARNING'
+            )
 
         return True
 
     def _check_app(self, name: str, app: dict) -> bool:
+        # pylint: disable=R0912
         log(f"Checking config for app '{name}'.", 'INFO')
 
         if not value_exists(data=app, key='peers'):
@@ -106,6 +118,7 @@ class DeserializeConfig:
         if not monitoring_ok or not peers_ok or not resources_ok:
             return False
 
+        log(f"App '{name}' - config checks passed!", 'INFO')
         return True
 
     def _check_resource(self, name: str, res: dict) -> bool:
@@ -113,8 +126,11 @@ class DeserializeConfig:
             log(f"Resource '{name}' has no plugin configured!")
             return False
 
-        if res['plugin'] not in self.PLUGINS['resource']:
-            log(f"Resource '{name}' has an non-existent plugin configured!")
+        elif res['plugin'] not in self.PLUGINS['resource']:
+            log(
+                f"Resource '{name}' has an non-existent plugin configured - "
+                f"not found in: '{HARDCODED['PATH_PLUGIN']}/resource'!"
+            )
             return False
 
         plugin = res['plugin']
@@ -131,31 +147,51 @@ class DeserializeConfig:
                 return False
 
         if not value_exists(data=res, key='vital'):
-            log(f"Resource '{name}' has no vitality configured - using default: '{self.CONFIG_ENGINE['DEFAULT_RESOURCE_VITAL']}'!", 'INFO')
+            log(
+                f"Resource '{name}' has no vitality configured - "
+                f"using default: '{self.CONFIG_ENGINE['DEFAULT_RESOURCE_VITAL']}'!",
+                'INFO'
+            )
 
         if not value_exists(data=res, key='mode'):
-            log(f"Resource '{name}' has no cluster-mode configured - using default: '{self.CONFIG_ENGINE['DEFAULT_RESOURCE_MODE']}'!", 'DEBUG')
+            log(
+                f"Resource '{name}' has no cluster-mode configured - "
+                f"using default: '{self.CONFIG_ENGINE['DEFAULT_RESOURCE_MODE']}'!",
+                'DEBUG'
+            )
 
         else:
-            # mode alias-translation and validation
-            m = res['mode']
-            if m in HARDCODED['MODE']['ALIAS']:
-                res['mode'] = HARDCODED['MODE']['ALIAS'][m]
+            return self._check_resource_mode(res=res, name=name, plugin=plugin)
 
-            if not validate(item='DEFAULT_RESOURCE_MODE', data=res['mode']):
-                log(f"Resource '{name}' has an invalid mode configured - valid: '{validate('DEFAULT_RESOURCE_MODE')}'!")
-                return False
+        return True
 
-            else:
-                mode_supported, mode_fallback = supported_mode(m=res['mode'], t='resource', p=plugin)
+    @staticmethod
+    def _check_resource_mode(res: dict, name: str, plugin: str) -> bool:
+        # mode alias-translation and validation
+        m = res['mode']
+        if m in HARDCODED['MODE']['ALIAS']:
+            res['mode'] = HARDCODED['MODE']['ALIAS'][m]
 
-                if not mode_supported:
-                    if mode_fallback is not None:
-                        log(f"Resource '{name}' has an unsupported mode configured - using fallback: '{mode_fallback}'.", 'WARNING')
+        if not validate(item='DEFAULT_RESOURCE_MODE', data=res['mode']):
+            log(
+                f"Resource '{name}' has an invalid mode configured - "
+                f"valid: '{validate('DEFAULT_RESOURCE_MODE')}'!"
+            )
+            return False
 
-                    else:
-                        log(f"Resource '{name}' has an unsupported mode configured!")
-                        return False
+        else:
+            mode_supported, mode_fallback = supported_mode(m=res['mode'], t='resource', p=plugin)
+
+            if not mode_supported:
+                if mode_fallback is not None:
+                    log(
+                        f"Resource '{name}' has an unsupported mode configured - "
+                        f"using fallback: '{mode_fallback}'.", 'WARNING'
+                    )
+
+                else:
+                    log(f"Resource '{name}' has an unsupported mode configured!")
+                    return False
 
         return True
 
@@ -165,7 +201,10 @@ class DeserializeConfig:
             return False
 
         if mon['plugin'] not in self.PLUGINS['monitoring']:
-            log(f"Monitoring '{name}' has an non-existent plugin configured!")
+            log(
+                f"Monitoring '{name}' has an non-existent plugin - "
+                f"not found in: '{HARDCODED['PATH_PLUGIN']}/monitoring'!"
+            )
             return False
 
         plugin = mon['plugin']
@@ -182,7 +221,11 @@ class DeserializeConfig:
                 return False
 
         if not value_exists(data=mon, key='interval'):
-            log(f"Monitoring '{name}' has no interval configured - using default: '{self.CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']}'!", 'INFO')
+            log(
+                f"Monitoring '{name}' has no interval configured - "
+                f"using default: '{self.CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']}'!",
+                'INFO'
+            )
 
         return True
 
@@ -191,8 +234,17 @@ class DeserializeConfig:
             log(f"Peer '{name}' has no host configured!")
             return False
 
+        else:
+            if not valid_host(peer['host']):
+                log(f"Peer '{name}' seems to be neither valid IP nor (resolvable) DNS!")
+                return False
+
         if not value_exists(data=peer, key='port'):
-            log(f"Peer '{name}' has no port configured - using default: '{self.CONFIG_ENGINE['DEFAULT_SYNC_PORT']}'!", 'INFO')
+            log(
+                f"Peer '{name}' has no port configured - "
+                f"using default: '{self.CONFIG_ENGINE['DEFAULT_SYNC_PORT']}'!",
+                'INFO'
+            )
 
         elif not validate(item='DEFAULT_SYNC_PORT', data=peer['port']):
             log(f"Peer '{name}' has an invalid port configured - valid: {validate(item='DEFAULT_SYNC_PORT')}!")

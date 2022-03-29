@@ -1,5 +1,7 @@
 # config defaults, global vars, hardcoded stuff, setting validation
 
+# pylint: disable=W0601
+
 from hado.core.config.defaults import ENGINE as ENGINE_DEFAULTS
 
 

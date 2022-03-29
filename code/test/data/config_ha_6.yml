@@ -21,16 +21,23 @@ a:  # minimal OK
           host: '127.0.1.2'
           port: 6666
 
+  system:
+    monitoring:
+      test:
+
   _TEST: true
   _TEST_STDOUT: 'INFO'  # always
   _TEST_NSTDOUT: 'ERROR|WARNING'
 
-b:  # invalid resource
+b:  # invalid resource config
   apps:
     test_app_b:
       resources:
         test_ip:
           plugin: 'doesNotExist'
+          plugin_args: 'p1 p2'
+          vital: true
+          mode: 'as'
       monitoring:
         test_ping:
           plugin: '_test3'
@@ -41,11 +48,15 @@ b:  # invalid resource
           host: '127.0.1.2'
           port: 6666
 
+  system:
+    monitoring:
+      test:
+
   _TEST: false
-  _TEST_STDOUT: '.*ERROR.*'
+  _TEST_STDOUT: 'ERROR'
   _TEST_NSTDOUT: 'WARNING'
 
-c:  # invalid monitoring
+c:  # invalid monitoring config
   apps:
     test_app_c:
       resources:
@@ -56,17 +67,23 @@ c:  # invalid monitoring
           mode: 'as'
       monitoring:
         test_ping:
+          plugin: 'doesNotExist'
+          plugin_args: 'placeholder'
           interval: 2
       peers:
         test_peer:
           host: '127.0.1.2'
           port: 6666
 
+  system:
+    monitoring:
+      test:
+
   _TEST: false
-  _TEST_STDOUT: '.*ERROR.*'
+  _TEST_STDOUT: 'ERROR'
   _TEST_NSTDOUT: 'WARNING'
 
-d:  # invalid peer
+d:  # invalid peer config
   apps:
     test_app_d:
       resources:
@@ -85,6 +102,33 @@ d:  # invalid peer
           host: 'doesNotExist'
           port: 6666
 
+  system:
+    monitoring:
+      test:
+
   _TEST: false
-  _TEST_STDOUT: '.*ERROR.*'
+  _TEST_STDOUT: 'ERROR'
   _TEST_NSTDOUT: 'WARNING'
+
+e:  # no system config
+  apps:
+    test_app_e:
+      resources:
+        test_ip:
+          plugin: '_test3'
+          plugin_args: 'p1 p2'
+          vital: true
+          mode: 'as'
+      monitoring:
+        test_ping:
+          plugin: '_test3'
+          plugin_args: 'placeholder'
+          interval: 2
+      peers:
+        test_peer:
+          host: '127.0.1.2'
+          port: 6666
+
+  _TEST: true
+  _TEST_STDOUT: 'WARNING'
+  _TEST_NSTDOUT: 'ERROR'
