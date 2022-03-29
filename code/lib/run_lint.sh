@@ -11,7 +11,7 @@ cd "$(dirname "$0")"
 #   R1705,R1723 => there's a reason for 'else' after breaks and returns.. (;
 
 echo "### Linting library ###"
-pylint hado/* --max-line-length=120 --disable=C0103,C0114,C0115,C0116,R0902,R0903,R1705,R1723
+pylint hado/**/*.py --max-line-length=120 --disable=C0103,C0114,C0115,C0116,R0902,R0903,R1705,R1723
 
 # test exclusions:
 #   C0103 => short and upper-case variables will be used
@@ -21,4 +21,4 @@ pylint hado/* --max-line-length=120 --disable=C0103,C0114,C0115,C0116,R0902,R090
 #   W0212 => accessing protected methods for testing
 
 echo "### Linting unit tests ###"
-pylint ../test/unit/* --max-line-length=120 --disable=C0103,C0114,C0115,C0116,C0415,R0201,W0212
+pylint ../test/**/*.py --max-line-length=120 --disable=C0103,C0114,C0115,C0116,C0415,R0201,W0212

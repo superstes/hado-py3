@@ -29,8 +29,10 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
           sudo apt install pylint
 
-      - name: Run unit tests
+      - name: Run linting
         run: |
           bash code/lib/run_lint.sh
