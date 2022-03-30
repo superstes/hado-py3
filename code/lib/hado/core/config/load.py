@@ -63,20 +63,20 @@ class DeserializeConfig:
         if not value_exists(data=self.CONFIG_HA, key='system'):
             log(
                 "No 'system' config found - using defaults and skipping system health monitoring!",
-                'WARNING'
+                lv=2
             )
 
         elif not value_exists(data=self.CONFIG_HA['system'], key='monitoring'):
             log(
                 "No 'system.monitoring' config found - skipping system health monitoring!",
-                'WARNING'
+                lv=2
             )
 
         return True
 
     def _check_app(self, name: str, app: dict) -> bool:
         # pylint: disable=R0912
-        log(f"Checking config for app '{name}'.", 'INFO')
+        log(f"Checking config for app '{name}'.", lv=3)
 
         if not value_exists(data=app, key='peers'):
             log(f"App '{name}' has no peers configured!")
@@ -87,7 +87,7 @@ class DeserializeConfig:
             return False
 
         if not value_exists(data=app, key='monitoring'):
-            log(f"App '{name}' has no app-specific monitoring configured.", 'INFO')
+            log(f"App '{name}' has no app-specific monitoring configured.", lv=3)
 
         resources_ok = True
         monitoring_ok = True
@@ -118,7 +118,7 @@ class DeserializeConfig:
         if not monitoring_ok or not peers_ok or not resources_ok:
             return False
 
-        log(f"App '{name}' - config checks passed!", 'INFO')
+        log(f"App '{name}' - config checks passed!", lv=3)
         return True
 
     def _check_resource(self, name: str, res: dict) -> bool:
@@ -139,7 +139,7 @@ class DeserializeConfig:
                 log(f"Resource '{name}' has required plugin-arguments not configured!")
                 return False
 
-            log(f"Resource '{name}' has no plugin-arguments configured!", 'INFO')
+            log(f"Resource '{name}' has no plugin-arguments configured!", lv=3)
 
         else:
             if not enough_args(args=res['plugin_args'], t='resource', p=plugin):
@@ -150,14 +150,14 @@ class DeserializeConfig:
             log(
                 f"Resource '{name}' has no vitality configured - "
                 f"using default: '{self.CONFIG_ENGINE['DEFAULT_RESOURCE_VITAL']}'!",
-                'INFO'
+                lv=3
             )
 
         if not value_exists(data=res, key='mode'):
             log(
                 f"Resource '{name}' has no cluster-mode configured - "
                 f"using default: '{self.CONFIG_ENGINE['DEFAULT_RESOURCE_MODE']}'!",
-                'DEBUG'
+                lv=4
             )
 
         else:
@@ -186,7 +186,7 @@ class DeserializeConfig:
                 if mode_fallback is not None:
                     log(
                         f"Resource '{name}' has an unsupported mode configured - "
-                        f"using fallback: '{mode_fallback}'.", 'WARNING'
+                        f"using fallback: '{mode_fallback}'.", lv=2
                     )
 
                 else:
@@ -210,10 +210,10 @@ class DeserializeConfig:
         plugin = mon['plugin']
         if not value_exists(data=mon, key='plugin_args'):
             if max_plugin_args(t='monitoring', p=plugin) != 0:
-                log(f"Monitoring '{name}' has no plugin-arguments configured!", 'ERROR')
+                log(f"Monitoring '{name}' has no plugin-arguments configured!")
                 return False
 
-            log(f"Monitoring '{name}' has no plugin-arguments configured!", 'INFO')
+            log(f"Monitoring '{name}' has no plugin-arguments configured!", lv=3)
 
         else:
             if not enough_args(args=mon['plugin_args'], t='monitoring', p=plugin):
@@ -224,7 +224,7 @@ class DeserializeConfig:
             log(
                 f"Monitoring '{name}' has no interval configured - "
                 f"using default: '{self.CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']}'!",
-                'INFO'
+                lv=3
             )
 
         return True
@@ -242,12 +242,12 @@ class DeserializeConfig:
         if not value_exists(data=peer, key='port'):
             log(
                 f"Peer '{name}' has no port configured - "
-                f"using default: '{self.CONFIG_ENGINE['DEFAULT_SYNC_PORT']}'!",
-                'INFO'
+                f"using default: '{self.CONFIG_ENGINE['DEFAULT_PEER_SYNC_PORT']}'!",
+                lv=3
             )
 
-        elif not validate(item='DEFAULT_SYNC_PORT', data=peer['port']):
-            log(f"Peer '{name}' has an invalid port configured - valid: {validate(item='DEFAULT_SYNC_PORT')}!")
+        elif not validate(item='DEFAULT_PEER_SYNC_PORT', data=peer['port']):
+            log(f"Peer '{name}' has an invalid port configured - valid: {validate(item='DEFAULT_PEER_SYNC_PORT')}!")
             return False
 
         return True

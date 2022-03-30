@@ -9,15 +9,16 @@ class Resource(BasePluginUse):
     mode = CONFIG_ENGINE['DEFAULT_RESOURCE_MODE']
     mode_prio = CONFIG_ENGINE['DEFAULT_RESOURCE_MODE_PRIO']
 
-    def __init__(self, config: dict, sequence: int):
+    def __init__(self, name: str, config: dict, sequence: int):
         super().__init__(
             vital=config['vital'] if 'vital' in config else CONFIG_ENGINE['DEFAULT_RESOURCE_VITAL'],
             plugin=Plugin(
                 plugin_type=self.plugin_type,
                 name=config['plugin'],
-                args=config['plugin_args'],
+                args=config['plugin_args'] if 'plugin_args' in config else [],
             )
         )
+        self.name = name
         self.sequence = sequence
         self._set_attr(data=config, attr='on_failure')
         self._set_attr(data=config, attr='on_shutdown')

@@ -3,36 +3,36 @@
 description: 'arg 1: a, arg 2: b'  # some description that makes the plugins usage easier
 
 start:
-  exec: '/bin/bash start.sh'  # start the resource
+  exec: ['/bin/bash', 'start.sh']  # start the resource
   arguments: 2  # number of arguments that have to be passed
 
 stop:
-  exec: '/bin/bash stop.sh'  # stop it
+  exec: ['/bin/bash', 'stop.sh']  # stop it
   args: 2
 
 active:
-  exec: '/bin/bash active.sh'  # check if the resource is active right now
+  exec: ['/bin/bash', 'active.sh']  # check if the resource is active right now
   args: 2
 
 init:
-  exec: '/bin/bash init.sh'  # tasks to run when the service gets initialized
+  exec: ['/bin/bash', 'init.sh']  # tasks to run when the service gets initialized
   args: 2
 
 other:
-  exec: '/bin/bash other.sh'  # prevent active-active state by checking if other is active before starting (in addition to basic node state-sync)
+  exec: ['/bin/bash', 'other.sh']  # prevent active-active state by checking if other is active before starting (in addition to basic node state-sync)
   args: 2
 
 # actions if this is a clustered resource
 leader:
-  exec: '/bin/bash leader.sh'  # is this server the leader
+  exec: ['/bin/bash', 'leader.sh']  # is this server the leader
 
 promote:
-  exec: '/bin/bash promote.sh'  # how to get leader
+  exec: ['/bin/bash', 'promote.sh']  # how to get leader
 
 demote:
-  exec: '/bin/bash demote.sh'  # how to 'step down' as leader
+  exec: ['/bin/bash', 'demote.sh']  # how to 'step down' as leader
 
 # may be useful
 fix:
-  exec: '/bin/bash fix.sh'
+  exec: ['/bin/bash', 'fix.sh']
   # you expect some errors to occur from time to time and want to auto-'hotfix' it

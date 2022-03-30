@@ -15,8 +15,9 @@ class App:
 
         self.resources = []
         next_seq = self._get_highest_sequence(app['resources']) + 1
-        for res in app['resources'].values():
+        for n, res in app['resources'].items():
             self.resources.append(Resource(
+                name=n,
                 config=res,
                 sequence=res['sequence'] if 'sequence' in res else next_seq,
             ))
@@ -25,8 +26,8 @@ class App:
 
         self.monitoring = []
         if 'monitoring' in app:
-            for mon in app['monitoring'].values():
-                self.monitoring.append(Monitoring(config=mon))
+            for n, mon in app['monitoring'].items():
+                self.monitoring.append(Monitoring(config=mon, name=n))
 
         self._set_attr(data=app, attr='on_failure')
         self._set_attr(data=app, attr='on_shutdown')
@@ -34,7 +35,7 @@ class App:
         self.action('init')
 
     def check(self):
-        log(f"{self.log_id} Starting check!", 'DEBUG')
+        log(f"{self.log_id} Starting check!", lv=4)
 
         # failover handling should be abstracted into separate class
         # check handling should also be separated
@@ -105,18 +106,14 @@ class App:
         return (100 / len(s)) * s.count(True)
 
     @property
-    def running(self) -> bool:
+    def status(self) -> bool:
         s = [r.status for r in self.resources if r.vital]
         s.extend([m.status for m in self.resources if m.vital])
         return all(s)
 
     @property
     def failed(self) -> bool:
-        return not self.running
-
-    @property
-    def status(self) -> int:
-        return 1 if self.running else 0
+        return not self.status
 
     def _set_attr(self, data: dict, attr: str):
         if attr in data:

@@ -32,7 +32,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r code/test/requirements.txt
-          sudo apt install pylint python3-pytest
+          sudo apt install pylint
 
       - name: Run linting
         run: |

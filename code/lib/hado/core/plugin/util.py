@@ -42,8 +42,12 @@ def max_plugin_args(t: str, p: str) -> int:
     return max(al)
 
 
-def enough_args(args: str, t: str, p: str) -> bool:
-    return len(args.split(' ')) >= max_plugin_args(t=t, p=p)
+def enough_args(args: (str, list), t: str, p: str) -> bool:
+    if isinstance(args, list):
+        return len(args) >= max_plugin_args(t=t, p=p)
+
+    else:
+        return len(args.split(' ')) >= max_plugin_args(t=t, p=p)
 
 
 def supported_mode(m: str, t: str, p: str) -> tuple:

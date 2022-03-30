@@ -99,7 +99,11 @@ Keeping the footprint of the base-engine small - you can add plugins as needed.
 4. Transparency
 ***************
 
-The functionality of the core should be logic and easily understandable and to troubleshoot.
+The functionality of the core should be logic and easy to understand and troubleshoot.
+
+Useful logs (*not to be confused with MANY logs*) and simple log-levels help finding and fixing problems faster!
+
+The current default values are written to /etc/hado so there's no need to read manpages or documentation just to find out which settings exist and what values are valid.
 
 ----
 

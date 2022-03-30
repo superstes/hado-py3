@@ -6,7 +6,7 @@ class Monitoring(BasePluginUse):
     plugin_type = PluginType.monitoring
     interval = CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']
 
-    def __init__(self, config: dict):
+    def __init__(self, name: str, config: dict):
         if 'vital' in config:
             v = config['vital']
         else:
@@ -17,9 +17,10 @@ class Monitoring(BasePluginUse):
             plugin=Plugin(
                 plugin_type=self.plugin_type,
                 name=config['plugin'],
-                args=config['plugin_args'] if 'plugin_args' in config else '',
+                args=config['plugin_args'] if 'plugin_args' in config else [],
             )
         )
+        self.name = name
         self._set_attr(data=config, attr='interval')
 
     def check(self) -> bool:

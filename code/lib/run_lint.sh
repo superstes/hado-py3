@@ -3,6 +3,9 @@
 # shellcheck disable=SC2164
 cd "$(dirname "$0")"
 
+py39venv="$(pwd)/../../venv/lib/python3.9/site-packages/"
+py39venvGH='/opt/hostedtoolcache/Python/3.9.10/x64/lib/python3.9/site-packages'
+
 # exclusions:
 #   C0103 => short and upper-case variables will be used
 #   C0114-C0116 => inline documentation might be added later on
@@ -11,7 +14,7 @@ cd "$(dirname "$0")"
 #   R1705,R1723 => there's a reason for 'else' after breaks and returns.. (;
 
 echo "### Linting library ###"
-pylint hado/**/*.py --max-line-length=120 --disable=C0103,C0114,C0115,C0116,R0902,R0903,R1705,R1723
+PYTHONPATH="${py39venv}:${py39venvGH}" pylint hado/**/*.py --max-line-length=120 --disable=C0103,C0114,C0115,C0116,R0902,R0903,R1705,R1723
 
 # test exclusions:
 #   C0103 => short and upper-case variables will be used
@@ -21,4 +24,4 @@ pylint hado/**/*.py --max-line-length=120 --disable=C0103,C0114,C0115,C0116,R090
 #   W0212 => accessing protected methods for testing
 
 echo "### Linting unit tests ###"
-pylint ../test/**/*.py --max-line-length=120 --disable=C0103,C0114,C0115,C0116,C0415,R0201,W0212
+PYTHONPATH="${py39venv}:${py39venvGH}" pylint ../test/**/*.py --max-line-length=120 --disable=C0103,C0114,C0115,C0116,C0415,R0201,W0212

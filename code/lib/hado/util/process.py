@@ -12,7 +12,7 @@ def subprocess(
         cmd: (list, str),
         timeout: int = CONFIG_ENGINE['PROCESS_TIMEOUT_MONITORING']
 ) -> str:
-    log(f"Executing command \"{cmd}\"", 'DEBUG')
+    log(f"Executing command \"{cmd}\"", lv=4)
 
     if not isinstance(cmd, list):
         cmd = [cmd]
@@ -34,7 +34,7 @@ def subprocess(
         stderr = error
 
     if exit_code == 0 and stderr in ['', ' ', None]:
-        log(f"Process output: \"{stdout}\"", 'DEBUG')
+        log(f"Process output: \"{stdout}\"", lv=4)
 
     else:
         log(

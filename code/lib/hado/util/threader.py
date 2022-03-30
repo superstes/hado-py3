@@ -28,26 +28,25 @@ class Workload(Thread):
         self.state_stop = Event()
         self.description = description
         self.log_name = f"\"{self.name}\" (\"{description}\")"
-        self.fail_count = 0
 
     def stop(self) -> bool:
-        log(f"Thread stopping {self.log_name}", 'INFO')
+        log(f"Thread stopping {self.log_name}", lv=3)
         self.state_stop.set()
 
         try:
             self.join(CONFIG_ENGINE['PROCESS_TIMEOUT'])
             if self.is_alive():
-                log(f"Unable to join thread {self.log_name}", 'WARNING')
+                log(f"Unable to join thread {self.log_name}", lv=2)
 
         except RuntimeError:
-            log(f"Got error stopping thread {self.log_name}", 'WARNING')
+            log(f"Got error stopping thread {self.log_name}", lv=2)
             return False
 
-        log(f"Stopped thread {self.log_name}", 'INFO')
+        log(f"Stopped thread {self.log_name}", lv=3)
         return True
 
     def run(self) -> None:
-        log(f"Entering runtime of thread {self.log_name}", 'DEBUG')
+        log(f"Entering runtime of thread {self.log_name}", lv=4)
         try:
             if self.once:
                 while not self.state_stop.wait(self.sleep.total_seconds()):
@@ -58,18 +57,17 @@ class Workload(Thread):
             else:
                 while not self.state_stop.wait(self.sleep.total_seconds()):
                     if self.state_stop.isSet():
-                        log(f"Exiting thread {self.log_name}", 'WARNING')
+                        log(f"Exiting thread {self.log_name}", lv=2)
                         break
 
                     else:
-                        log(f"Starting thread {self.log_name}", 'DEBUG')
+                        log(f"Starting thread {self.log_name}", lv=4)
                         self.execute(data=self.data)
 
-        except:
-            self.fail_count += 1
-            exc_type, exc_obj, _ = sys_exc_info()
-            log(f"Thread {self.log_name} failed with error: \"{exc_type} - {exc_obj}\"")
-            log(f"{format_exc(limit=CONFIG_ENGINE['TRACEBACK_LINES'])}", 'ERROR')
+        except Exception as e:
+            exc_type, _, _ = sys_exc_info()
+            log(f"Thread {self.log_name} failed with error: \"{exc_type} - {e}\"")
+            log(f"{format_exc(limit=CONFIG_ENGINE['TRACEBACK_LINES'])}")
 
             if not self.once:
                 self.run()
@@ -81,7 +79,7 @@ class Loop:
         self.thread_nr = 0
 
     def start(self) -> None:
-        log('Starting all threads', 'DEBUG')
+        log('Starting all threads', lv=4)
 
         for job in self.jobs:
             job.start()
@@ -90,7 +88,7 @@ class Loop:
             self, sleep_time: int, thread_data, description: str,
             once: bool = False, daemon: bool = True
     ):
-        log(f"Adding thread for \"{description}\" with interval \"{sleep_time}\"", 'DEBUG')
+        log(f"Adding thread for \"{description}\" with interval \"{sleep_time}\"", lv=4)
         self.thread_nr += 1
 
         def decorator(function):
@@ -133,21 +131,21 @@ class Loop:
                 self.stop()
 
     def stop(self) -> bool:
-        log('Stopping all threads', 'INFO')
+        log('Stopping all threads', lv=3)
 
         for job in self.jobs:
             job.stop()
 
-        log('All threads stopped. Exiting loop', 'INFO')
+        log('All threads stopped. Exiting loop', lv=3)
         return True
 
     def stop_thread(self, description: str):
-        log(f"Stopping thread for \"{description}\"", 'DEBUG')
+        log(f"Stopping thread for \"{description}\"", lv=4)
         for job in self.jobs:
             if job.description == description:
                 job.stop()
                 self.jobs.remove(job)
-                log(f"Thread {job.description} stopped.", 'INFO')
+                log(f"Thread {job.description} stopped.", lv=3)
                 del job
                 break
 
@@ -155,11 +153,11 @@ class Loop:
         for job in self.jobs:
             if job.description == description:
                 job.start()
-                log(f"Thread {job.description} started.", 'DEBUG')
+                log(f"Thread {job.description} started.", lv=4)
                 break
 
     def reload_thread(self, sleep_time: int, thread_data, description: str) -> None:
-        log(f"Reloading thread for \"{description}\"", 'INFO')
+        log(f"Reloading thread for \"{description}\"", lv=3)
         self.stop_thread(description=description)
         self.add_thread(
             sleep_time=sleep_time,
@@ -169,5 +167,5 @@ class Loop:
         self.start_thread(description=description)
 
     def list(self) -> list:
-        log('Returning thread list', 'DEBUG')
+        log('Returning thread list', lv=4)
         return [job.data for job in self.jobs]

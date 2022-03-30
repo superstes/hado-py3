@@ -3,5 +3,5 @@
 description: "-t: the ping target, -s: ping source address (optional), -w: timeout in seconds (optional, pe: '-w=0.3', default=0.2)"
 
 check:
-  exec: '/bin/bash check.sh'  # start the monitoring check
+  exec: ['/bin/bash', 'check.sh']  # start the monitoring check
   args: 1

@@ -8,7 +8,7 @@ a:  # minimal OK
       resources:
         test_ip_a:
           plugin: '_test3'
-          plugin_args: 'p1 p2'
+          plugin_args: ['p1', 'p2']
           vital: true
           mode: 'as'
   _TEST: true
@@ -69,7 +69,7 @@ g:  # no vitality
       resources:
         test_ip_g:
           plugin: '_test3'
-          plugin_args: 'p1 p2'
+          plugin_args: ['p1', 'p2']
           mode: 'as'
   _TEST: true
   _TEST_STDOUT: 'INFO'
@@ -81,7 +81,7 @@ h:  # invalid mode
       resources:
         test_ip_h:
           plugin: '_test3'
-          plugin_args: 'p1 p2'
+          plugin_args: ['p1', 'p2']
           mode: 'doesNotExist'
           vital: true
   _TEST: false
@@ -106,8 +106,35 @@ j:  # unsupported mode without fallback
       resources:
         test_ip_j:
           plugin: '_test2'
-          plugin_args: '-i=127.0.1.1 -d=lo'
+          plugin_args: ['p1', 'p2']
           mode: 'as'
           vital: true
   _TEST: false
   _TEST_STDOUT: 'ERROR'
+
+k:  # empty plugin args when needed
+  apps:
+    test:
+      resources:
+        test_ip_k:
+          plugin: '_test3'
+          plugin_args:
+          vital: true
+          mode: 'as'
+  _TEST: false
+  _TEST_STDOUT: 'ERROR'
+
+l:  # empty plugin args when none are needed
+  apps:
+    test:
+      resources:
+        test_ip_l:
+          plugin: '_test1'
+          plugin_args:
+          vital: true
+          mode: 'as'
+  _TEST: true
+  _TEST_STDOUT: 'INFO'
+  _TEST_NSTDOUT: 'ERROR|WARNING'
+
+# todo: plugin arguments as string instead of list must raise info log

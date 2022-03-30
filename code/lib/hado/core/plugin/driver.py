@@ -40,25 +40,29 @@ class Plugin:
         self.BASE = f"{HARDCODED['PATH_PLUGIN']}/{plugin_desc[plugin_type]}/{name}"
         self.NAME = name
         self.TYPE = plugin_type
-        self.ARGS = args.split(' ')
         self.CONFIG_FILE = f"{self.BASE}/config.yml"
         self.CONFIG = {}
         self.log_id = f"Plugin - {plugin_desc[self.TYPE].capitalize()} {self.NAME} -"
-        self._load_config()
-        self.CMDS = []
-        self._get_cmds()
-        self._check_plugin()
+        if isinstance(args, list):
+            self.ARGS = args
 
-    def _check_plugin(self):
+        else:
+            log(
+                f"{self.log_id} Plugin arguments should be provided as list!",
+                lv=3
+            )
+            self.ARGS = args.split(' ')
+
+        self._load_config()
+        self.CMDS = self._get_cmds()
+
+    def _load_config(self):
         if not Path(self.BASE).is_dir():
             raise NotADirectoryError(
                 f"ERROR: {self.log_id} Plugin directory was not found: '{self.BASE}'"
             )
 
-        self._get_cmds()
-
-    def _load_config(self):
-        if Path(self.CONFIG_FILE).is_file():
+        elif Path(self.CONFIG_FILE).is_file():
             with open(self.CONFIG_FILE, 'r') as cnf:
                 self.CONFIG = yaml_load(cnf.read())
 
@@ -67,10 +71,13 @@ class Plugin:
                 f"ERROR: {self.log_id} Unable to load config from file: '{self.CONFIG_FILE}'"
             )
 
-    def _get_cmds(self):
+    def _get_cmds(self) -> list:
+        cl = []
         for cmd in plugin_cmds[self.TYPE]:
             if cmd in self.CONFIG:
-                self.CMDS.append(cmd)
+                cl.append(cmd)
+
+        return cl
 
     def _check_cmd_support(self, t: str, s: int = 2) -> bool:
         if t in self.CMDS:
@@ -80,18 +87,60 @@ class Plugin:
             raise ValueError(f"ERROR: {self.log_id} Command type '{t}' not supported!")
 
         elif s == 2:
-            log(f"{self.log_id} Command type '{t}' not supported!", 'WARNING')
+            log(f"{self.log_id} Command type '{t}' not supported!", lv=2)
 
         elif s == 3:
-            log(f"{self.log_id} Command type '{t}' not supported!", 'DEBUG')
+            log(f"{self.log_id} Command type '{t}' not supported!", lv=4)
 
         return False
 
-    def _get_cmd(self, t: str) -> str:
+    def _check_cmd_base(self, t: str) -> list:
         cnf_exec = self.CONFIG[t]['exec']
-        cnf_arg_nr = self.CONFIG[t]['args']
-        e_args = ''
-        e_bin = ''
+
+        if not isinstance(cnf_exec, list):
+            # if single executable => accept as list
+            if len(cnf_exec.split(' ', 1)) == 1:
+                cnf_exec = [cnf_exec]
+
+            else:
+                log(
+                    f"{self.log_id} Plugin executable should be provided as list!",
+                    lv=3
+                )
+
+        if isinstance(cnf_exec, list):
+            # only supporting magic on listed arguments
+            cmd = cnf_exec
+            if len(cmd) == 1:
+                if cmd[0].find('/') == -1:
+                    cmd[0] = f"{self.BASE}/{cmd[0]}"
+
+            else:
+                if cmd[1].find('/') == -1:
+                    cmd[1] = f"{self.BASE}/{cmd[1]}"
+
+        else:
+            cmd = [cnf_exec]
+
+        for f in cmd:
+            if f.find('/') != -1:
+                if not Path(f).is_file():
+                    raise FileNotFoundError(
+                        f"ERROR: {self.log_id} Executable "
+                        f"was not found: '{f}'"
+                        )
+
+        return cmd
+
+    def _get_cmd(self, t: str) -> list:
+        cmd = self._check_cmd_base(t=t)
+        cmd.extend(self.ARGS)
+
+        if 'args' in self.CONFIG[t]:
+            cnf_arg_nr = self.CONFIG[t]['args']
+
+        else:
+            cnf_arg_nr = 0
 
         if len(self.ARGS) < cnf_arg_nr:
             raise ValueError(
@@ -99,124 +148,112 @@ class Plugin:
                 f"configured {cnf_arg_nr} / got {len(self.ARGS)}!"
             )
 
-        e = cnf_exec.split(' ', 1)
-
-        if len(e) == 2:
-            _bin = e[1]
-
-            if not Path(_bin).is_file():
-                raise FileNotFoundError(
-                    f"ERROR: {self.log_id} Binary to execute "
-                    f"was not found: '{_bin}'"
-                )
-
-            e_bin = f"{e[1]} "
-            e_exe = e[2]
-
-        else:
-            e_exe = e[1]
-
-        if e_exe.find('/') == -1:
-            e_exe = f"{self.BASE}/{e_exe}"
-
-        if not Path(e_exe).is_file():
-            raise FileNotFoundError(
-                f"ERROR: {self.log_id} Executable was not found: '{e_exe}'"
-            )
-
-        if len(self.ARGS) > 0:
-            e_args = f" {' '.join(self.ARGS)}"
-
-        log(f"{self.log_id} Executing action '{t}': '{e_bin}{e_exe}{e_args}'", 'DEBUG')
-
-        return f"{e_bin}{e_exe}{e_args}"
+        log(f"{self.log_id} Executing action '{t}': '{' '.join(cmd)}'", lv=4)
+        return cmd
 
     # pylint: disable=R0913
     def _exec(self, t: str,
               cno: bool = False,
               ca: bool = False, cna: bool = False,
               cnl: bool = False, cl: bool = False,
-              ):
-        cmd = self._get_cmd(t=t)
+              ) -> str:
         run = True
 
         if cno and 'other' in self.CMDS:
             if self.is_other:
-                log(f"{self.log_id} other node is active - not executing '{t}'!", 'WARNING')
+                log(f"{self.log_id} other node is active - not executing '{t}'!", lv=2)
                 run = False
 
         if (ca or cna) and 'active' in self.CMDS:
             active = self.is_active
             if ca and not active:
-                log(f"{self.log_id} is not active - not executing '{t}'!", 'WARNING')
+                log(f"{self.log_id} is not active - not executing '{t}'!", lv=2)
                 run = False
 
             if cna and active:
-                log(f"{self.log_id} is active - not executing '{t}'!", 'WARNING')
+                log(f"{self.log_id} is active - not executing '{t}'!", lv=2)
                 run = False
 
         if (cl or cnl) and 'leader' in self.CMDS:
             leader = self.is_leader
             if cl and not leader:
-                log(f"{self.log_id} is not leader - not executing '{t}'!", 'WARNING')
+                log(f"{self.log_id} is not leader - not executing '{t}'!", lv=2)
                 run = False
 
             if cnl and leader:
-                log(f"{self.log_id} is leader - not executing '{t}'!", 'WARNING')
+                log(f"{self.log_id} is leader - not executing '{t}'!", lv=2)
                 run = False
 
         if run:
             for k, v in plugin_cmd_timeouts.items():
                 if t in v:
-                    return subprocess(cmd=cmd, timeout=CONFIG_ENGINE[k])
+                    return subprocess(cmd=self._get_cmd(t=t), timeout=CONFIG_ENGINE[k])
 
-            return subprocess(cmd=cmd)
+            return subprocess(cmd=self._get_cmd(t=t))
 
         else:
             return '0'
 
-    def start(self):
+    def start(self) -> bool:
         # start resource
         t = 'start'
         if self._check_cmd_support(t=t, s=1):
-            log(f"{self.log_id} Starting!", 'INFO')
+            log(f"{self.log_id} Starting!", lv=3)
             self._exec(t, cno=True, cna=True)
+            return True
 
-    def stop(self):
+        return False
+
+    def stop(self) -> bool:
         # stop resource
         t = 'stop'
         if self._check_cmd_support(t=t, s=1):
-            log(f"{self.log_id} Stopping!", 'WARNING')
+            log(f"{self.log_id} Stopping!", lv=2)
             self.demote()
             self._exec(t, ca=True)
+            return True
 
-    def promote(self):
+        return False
+
+    def promote(self) -> bool:
         # promote resource to cluster leader
         t = 'promote'
         if self._check_cmd_support(t=t, s=2):
-            log(f"{self.log_id} Promoting to leader!", 'INFO')
-            self._exec(t, cnl=True)
+            log(f"{self.log_id} Promoting to leader!", lv=3)
+            self._exec(t, cnlv=True)
+            return True
 
-    def demote(self):
+        return False
+
+    def demote(self) -> bool:
         # demote resource to cluster worker
         t = 'demote'
         if self._check_cmd_support(t=t, s=3):
-            log(f"{self.log_id} Demoting to worker!", 'INFO')
-            self._exec(t, cl=True)
+            log(f"{self.log_id} Demoting to worker!", lv=3)
+            self._exec(t, clv=True)
+            return True
 
-    def init(self):
+        return False
+
+    def init(self) -> bool:
         # initialize resource
         t = 'init'
         if self._check_cmd_support(t=t, s=3):
-            log(f"{self.log_id} Initializing!", 'INFO')
+            log(f"{self.log_id} Initializing!", lv=3)
             self._exec(t)
+            return True
 
-    def fix(self):
+        return False
+
+    def fix(self) -> bool:
         # you expect some error to occur from time to time and want to auto-'hotfix' it
         t = 'fix'
         if self._check_cmd_support(t=t, s=3):
-            log(f"{self.log_id} Running fix!", 'WARNING')
+            log(f"{self.log_id} Running fix!", lv=2)
             self._exec(t, cna=True)
+            return True
+
+        return False
 
     def _stdout_ok(self, stdout: str) -> bool:
         if stdout == "1":
@@ -225,7 +262,7 @@ class Plugin:
         elif stdout != "0":
             log(
                 f"{self.log_id} Got unexpected result from execution "
-                f"(expected '0' or '1'): '{stdout}'", 'WARNING'
+                f"(expected '0' or '1'): '{stdout}'", lv=2
             )
 
         return False
@@ -234,7 +271,7 @@ class Plugin:
         # if monitoring check passed
         t = 'check'
         if self._check_cmd_support(t=t, s=1):
-            log(f"{self.log_id} running monitoring task.", 'DEBUG')
+            log(f"{self.log_id} running monitoring task.", lv=4)
             return self._stdout_ok(self._exec(t))
 
         return False
@@ -244,7 +281,7 @@ class Plugin:
         # if resource is active
         t = 'active'
         if self._check_cmd_support(t=t, s=1):
-            log(f"{self.log_id} checking if active.", 'DEBUG')
+            log(f"{self.log_id} checking if active.", lv=4)
             return self._stdout_ok(self._exec(t))
 
         return False
@@ -254,7 +291,7 @@ class Plugin:
         # check if resource is active on another node
         t = 'other'
         if self._check_cmd_support(t=t, s=3):
-            log(f"{self.log_id} checking if other is active.", 'DEBUG')
+            log(f"{self.log_id} checking if other is active.", lv=4)
             return self._stdout_ok(self._exec(t))
 
         return False
@@ -264,7 +301,7 @@ class Plugin:
         # check if this node is the leader in a resource cluster
         t = 'leader'
         if self._check_cmd_support(t=t, s=3):
-            log(f"{self.log_id} checking leader state.", 'DEBUG')
+            log(f"{self.log_id} checking leader state.", lv=4)
             return self._stdout_ok(self._exec(t))
 
         return False

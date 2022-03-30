@@ -2,3 +2,4 @@ flask
 flask-restful
 PyYAML
 requests
+waitress

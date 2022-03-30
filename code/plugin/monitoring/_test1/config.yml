@@ -3,5 +3,5 @@
 description: "test monitoring-plugin #1"
 
 check:
-  exec: '/bin/bash check.sh'  # start the monitoring check
+  exec: ['/bin/bash', 'check.sh']  # start the monitoring check
   args: 2

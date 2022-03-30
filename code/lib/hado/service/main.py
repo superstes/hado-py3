@@ -33,6 +33,7 @@ from yaml import safe_load as yaml_load
 
 from hado.util.threader import Loop as Thread
 from hado.util.debug import log
+from hado.api.server import RestServer
 from hado.core.config.defaults import HARDCODED
 from hado.core.config.dump import dump_defaults
 
@@ -50,10 +51,10 @@ class Service:
 
     def start(self):
         try:
-            # self._thread()
+            self._thread(i=1, desc='HA-DO Rest-Server', d={'run': RestServer(), 'method': 'start'})
 
             self.THREADER.start()
-            log('Start - finished starting threads.', 'INFO')
+            log('Start - finished starting threads.', lv=3)
             self._status()
 
         except TypeError as error_msg:
@@ -64,7 +65,7 @@ class Service:
 
     @staticmethod
     def stop(signum=None, stack=None):
-        log(f"Service received signal {signum}", 'WARNING')
+        log(f"Service received signal {signum}", lv=2)
         raise SystemExit('Service exited.')
 
     def _init_config(self):
@@ -87,23 +88,21 @@ class Service:
                     self.CONFIG_ENGINE.update(yaml_load(cnf.read()))
 
             else:
-                log(f"No custom engine config loaded (file: '{HARDCODED['CONFIG_ENGINE']}')", 'INFO')
+                log(f"No custom engine config loaded (file: '{HARDCODED['CONFIG_ENGINE']}')", lv=3)
 
         else:
             log(f"Unable to load config from file: '{HARDCODED['CONFIG_HA']}'")
             self.stop()
 
-    def _thread(self, timer: int = None, once: bool = False):
-        pass
-        # @self.THREADER.add_thread(
-        #     sleep_time=int(instance.timer) if timer is None else timer,
-        #     thread_data=instance,
-        #     description=instance.name,
-        #     once=once,
-        #     daemon=True,
-        # )
-        # def thread_task(data):
-        #
+    def _thread(self, i: int, d: dict, desc: str):
+        # pylint: disable=W0612
+        @self.THREADER.add_thread(
+            sleep_time=i,
+            thread_data=d,
+            description=desc,
+        )
+        def thread_task(data: dict):
+            getattr(data['run'], data['method'])()
 
     @staticmethod
     def _wait(seconds: int):
@@ -115,10 +114,10 @@ class Service:
     def _status(self):
         thread_list = self.THREADER.list()
         simple_thread_list = [thread.name for thread in thread_list]
-        log(f"Status - threads running: {simple_thread_list}", 'INFO')
+        log(f"Status - threads running: {simple_thread_list}", lv=3)
         if HARDCODED['DEBUG']:
             detailed_thread_list = '\n'.join([str(thread.__dict__) for thread in thread_list])
-            log(f"Detailed info on running threads:\n{detailed_thread_list}", 'DEBUG')
+            log(f"Detailed info on running threads:\n{detailed_thread_list}", lv=4)
 
     def _run(self):
         # pylint: disable=W0702

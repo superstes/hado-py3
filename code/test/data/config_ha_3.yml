@@ -70,3 +70,24 @@ g:  # no interval
   _TEST: true
   _TEST_STDOUT: 'INFO'
   _TEST_NSTDOUT: 'ERROR|WARNING'
+
+h:  # empty plugin args when needed
+  apps:
+    test:
+      monitoring:
+        test_ping_h:
+          plugin: '_test1'
+          plugin_args:
+  _TEST: false
+  _TEST_STDOUT: 'ERROR'
+
+i:  # empty plugin args when none needed
+  apps:
+    test:
+      monitoring:
+        test_ping_i:
+          plugin: '_test2'
+          plugin_args:
+  _TEST: true
+  _TEST_STDOUT: 'INFO'
+  _TEST_NSTDOUT: 'ERROR|WARNING'
