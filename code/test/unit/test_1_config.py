@@ -1,17 +1,10 @@
 # Test config-related functions
 
-from os import getcwd, path, rename
+from os import path, rename
 from re import match as regex_match
 import pytest
 
-
-def mock_paths(mocker) -> dict:
-    from hado.core.config.defaults import HARDCODED
-    h = HARDCODED.copy()
-    h['PATH_CONFIG'] = f"{getcwd()}/../etc"
-    h['PATH_PLUGIN'] = f"{getcwd()}/../plugin"
-    mocker.patch('hado.core.config.defaults.HARDCODED', h)
-    return h
+from .util import mock_paths
 
 
 def yaml_test_validation(c, e: dict):
@@ -163,6 +156,9 @@ class TestConfigLoader:
         for e in examples.values():
             cnf = {}
             capsys.readouterr()
+
+            # mocking 'app' so that the test is not reaching too deep
+            mocker.patch('hado.core.app.App.__init__', return_value=None)
 
             try:
                 cnf = DeserializeConfig(config_ha=e, config_engine=CONFIG_ENGINE).get()

@@ -4,7 +4,7 @@ from hado.core.config.defaults import HARDCODED
 
 VALIDATION = {
     'DEFAULT_RESOURCE_MODE': {'check': 'in', 'data': HARDCODED['MODE']['VALID']},
-    'DEFAULT_PEER_SYNC_PORT': {'check': 'between', 'data': [1023, 49152]},
+    'DEFAULT_PEER_API_PORT': {'check': 'between', 'data': [1023, 49152]},
     'PROCESS_TIMEOUT_ACTION': {'check': 'between', 'data': [0, 1801]},
     'PROCESS_TIMEOUT_MONITORING': {'check': 'between', 'data': [0, 61]},
     'DEFAULT_RESOURCE_MODE_PRIO': {'check': 'between', 'data': [0, 2049]},
@@ -13,9 +13,11 @@ VALIDATION = {
     'DEBUG': {'check': 'type', 'data': bool},
     'DEFAULT_RESOURCE_VITAL': {'check': 'type', 'data': bool},
     'DEFAULT_MONITORING_VITAL': {'check': 'type', 'data': bool},
-    'SYNC_LISTEN_IP': {'check': 'ip-address', 'data': None},
-    'SYNC_PUBLIC_ALLOW_ANY': {'check': 'type', 'data': bool},
-    'SYNC_PUBLIC_ACCEPTLIST': {'check': 'type', 'data': list},
+    'API_LISTEN_IP': {'check': 'ip-address', 'data': None},
+    'API_PUBLIC_ALLOW_ANY': {'check': 'type', 'data': bool},
+    'API_PUBLIC_ACCEPTLIST': {'check': 'type', 'data': list},
+    'API_POST_ACCEPT_NON_LOCAL': {'check': 'type', 'data': bool},
+    'API_POST_ACCEPTLIST': {'check': 'type', 'data': list},
     'LOG_MODE': {'check': 'in', 'data': HARDCODED['LOG_MODE']['VALID']},
 }
 

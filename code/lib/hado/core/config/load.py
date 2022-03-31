@@ -242,12 +242,12 @@ class DeserializeConfig:
         if not value_exists(data=peer, key='port'):
             log(
                 f"Peer '{name}' has no port configured - "
-                f"using default: '{self.CONFIG_ENGINE['DEFAULT_PEER_SYNC_PORT']}'!",
+                f"using default: '{self.CONFIG_ENGINE['DEFAULT_PEER_API_PORT']}'!",
                 lv=3
             )
 
-        elif not validate(item='DEFAULT_PEER_SYNC_PORT', data=peer['port']):
-            log(f"Peer '{name}' has an invalid port configured - valid: {validate(item='DEFAULT_PEER_SYNC_PORT')}!")
+        elif not validate(item='DEFAULT_PEER_API_PORT', data=peer['port']):
+            log(f"Peer '{name}' has an invalid port configured - valid: {validate(item='DEFAULT_PEER_API_PORT')}!")
             return False
 
         return True

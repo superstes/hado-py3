@@ -33,7 +33,7 @@ from yaml import safe_load as yaml_load
 
 from hado.util.threader import Loop as Thread
 from hado.util.debug import log
-from hado.api.server import RestServer
+from hado.api import server
 from hado.core.config.defaults import HARDCODED
 from hado.core.config.dump import dump_defaults
 
@@ -51,7 +51,7 @@ class Service:
 
     def start(self):
         try:
-            self._thread(i=1, desc='HA-DO Rest-Server', d={'run': RestServer(), 'method': 'start'})
+            self._thread(i=1, desc='HA-DO Rest-Server', d={'run': server, 'method': 'start'})
 
             self.THREADER.start()
             log('Start - finished starting threads.', lv=3)

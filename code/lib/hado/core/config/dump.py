@@ -1,6 +1,5 @@
-from hado.core.config.defaults import ENGINE
+from hado.core.config.defaults import ENGINE, HARDCODED
 from hado.core.config.validate import validate
-from hado.core.config.defaults import HARDCODED
 
 
 def dump_defaults() -> None:
