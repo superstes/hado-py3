@@ -40,8 +40,9 @@ jobs:
       - name: Get test coverage
         run: |
           bash code/lib/get_test_coverage.sh
+          ls -la code/lib
 
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
-          directory: code/lib/
+          files: code/lib/.coverage
