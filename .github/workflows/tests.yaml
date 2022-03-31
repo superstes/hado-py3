@@ -36,3 +36,11 @@ jobs:
       - name: Run unit tests
         run: |
           bash code/lib/run_tests.sh
+
+      - name: Get test coverage
+        run: |
+          bash code/lib/get_test_coverage.sh
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v2
+        directory: code/lib/

@@ -2,7 +2,7 @@
 # base code source: https://github.com/sankalpjonn/timeloop
 # modified for use in HA-DO
 
-# pylint: disable=W0702, R0913
+# pylint: disable=R0913
 
 from threading import Thread, Event
 from time import sleep as time_sleep
@@ -46,6 +46,7 @@ class Workload(Thread):
         return True
 
     def run(self) -> None:
+        # pylint: disable=W0703
         log(f"Entering runtime of thread {self.log_name}", lv=4)
         try:
             if self.once:
