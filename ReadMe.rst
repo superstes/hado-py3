@@ -6,6 +6,10 @@ HA-DO - SIMPLE Clustering Engine
    :target: https://github.com/superstes/hado-py3/actions/workflows/tests.yaml
    :alt: UnitTests
 
+.. image:: https://codecov.io/gh/superstes/hado-py3/branch/main/graph/badge.svg?token=UD4TM8N256
+   :target: https://codecov.io/gh/superstes/hado-py3
+   :alt: TestCoverage
+
 .. image:: https://readthedocs.org/projects/hado-python3/badge/?version=latest
    :target: https://hado.superstes.eu
    :alt: Documentation
