@@ -2,5 +2,4 @@
 
 # shellcheck disable=SC2164
 cd "$(dirname "$0")"
-python3 -m coverage run -m pytest ../test/
-python3 -m coverage report -m
+python3 -m pytest ../test/ --cov=./ --cov-report=xml --cov-report=term:skip-covered
