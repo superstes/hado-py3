@@ -1,4 +1,5 @@
-import pytest
+# Test functionality of the app-object
+
 from re import match as regex_match
 
 from hado.core.app import App

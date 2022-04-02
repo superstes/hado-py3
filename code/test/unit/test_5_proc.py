@@ -1,6 +1,5 @@
 # Test functions that run external processes
 
-import pytest
 from time import time, sleep
 from pathlib import Path
 from os import remove
@@ -11,6 +10,7 @@ from hado.util.process import subprocess
 
 
 def thread(threader, d: dict, desc: str):
+    # pylint: disable=W0612
     @threader.add_thread_deco(
         sleep=0.1,
         thread_data=d,

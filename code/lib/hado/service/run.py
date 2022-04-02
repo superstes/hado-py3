@@ -96,8 +96,8 @@ class Service:
 
     def _thread(self, i: int, d: dict, desc: str):
         # pylint: disable=W0612
-        @self.THREADER.add_thread(
-            sleep_time=i,
+        @self.THREADER.add_thread_deco(
+            sleep=i,
             thread_data=d,
             description=desc,
         )

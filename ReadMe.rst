@@ -32,7 +32,7 @@ Intro
 
 The goal of this project is it to provide a **simple base-engine for building high-available systems**.
 
-`CoroSync <https://github.com/corosync>`_, `Heartbeat <http://www.linux-ha.org/wiki/Heartbeat>`_ and `Pacemaker <http://www.linux-ha.org/wiki/Pacemaker>`_ build the probably most commonly used HA-clustering stack.
+`CoroSync <https://github.com/corosync>`_, `Heartbeat <http://www.linux-ha.org/wiki/Heartbeat>`_ and `Pacemaker <http://www.linux-ha.org/wiki/Pacemaker>`_ build a commonly used HA-clustering stack.
 
 I want to code an alternative to it.
 
@@ -52,7 +52,7 @@ Functionality can be added using `plugins <https://github.com/superstes/hado-pyt
 2. Platform
 ***********
 
-Initially this solution will only target **systems that use systemd** as init.
+Initially this solution will only target **systems that use systemd** as init. (*debian, ubuntu, ...*)
 
 
 3. Functionality
