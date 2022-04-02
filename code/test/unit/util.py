@@ -21,7 +21,8 @@ def mock_paths(mocker) -> dict:
 def check_methods(p: str, c, u: str = 'get'):
     if u == 'post':
         rg = c.get(p)
-        assert rg.status_code == HTTP_CODES['IM']
+        assert rg.status_code == HTTP_CODES['NF']
+        # get has a catchall that returns 404
 
     elif u == 'get':
         rp = c.post(p)

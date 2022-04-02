@@ -41,7 +41,6 @@ TEST_CONFIG = {
 @pytest.fixture
 def app(mocker):
     mocker.patch('hado.api.get.CONFIG_LOADED', TEST_CONFIG)
-
     return api
 
 
@@ -84,3 +83,15 @@ class TestAPIStati:
         assert rg.status_code == HTTP_CODES['OK']
         assert rg.content_type == 'application/json'
         check_methods(p=path, c=client)
+
+    def test_post_maintenance(self, client):
+        path = '/c/m'
+        rg = client.post(path)
+        assert rg.status_code == HTTP_CODES['NI']
+        check_methods(p=path, c=client, u='post')
+
+    def test_post_standby(self, client):
+        path = '/c/s'
+        rg = client.post(path)
+        assert rg.status_code == HTTP_CODES['NI']
+        check_methods(p=path, c=client, u='post')

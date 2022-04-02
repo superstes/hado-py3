@@ -12,13 +12,13 @@ def yaml_test_validation(c, e: dict):
     o = stdout.replace('\n', ' ')
 
     if '_TEST_STDOUT' in e:
-        assert regex_match(e['_TEST_STDOUT'], o)
+        assert regex_match(f".*{e['_TEST_STDOUT']}.*", o)
 
     else:
         assert stdout == ''
 
     if '_TEST_NSTDOUT' in e:
-        assert not regex_match(e['_TEST_NSTDOUT'], o)
+        assert not regex_match(f".*{e['_TEST_NSTDOUT']}.*", o)
 
 
 class TestConfigLoader:

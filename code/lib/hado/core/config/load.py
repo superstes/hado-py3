@@ -153,6 +153,28 @@ class DeserializeConfig:
                 lv=3
             )
 
+        if not value_exists(data=res, key='on_failure'):
+            log(
+                f"Resource '{name}' has no on_failure-action configured - "
+                f"using default: '{self.CONFIG_ENGINE['DEFAULT_ACTION_FAILURE']}'!",
+                lv=4
+            )
+
+        elif res['on_failure'] not in HARDCODED['ACTION']['VALID']:
+            log(f"Resource '{name}' has an invalid on_failure-action configured!")
+            return False
+
+        if not value_exists(data=res, key='on_shutdown'):
+            log(
+                f"Resource '{name}' has no on_shutdown-action configured - "
+                f"using default: '{self.CONFIG_ENGINE['DEFAULT_ACTION_FAILURE']}'!",
+                lv=4
+            )
+
+        elif res['on_shutdown'] not in HARDCODED['ACTION']['VALID']:
+            log(f"Resource '{name}' has an invalid on_shutdown-action configured!")
+            return False
+
         if not value_exists(data=res, key='mode'):
             log(
                 f"Resource '{name}' has no cluster-mode configured - "

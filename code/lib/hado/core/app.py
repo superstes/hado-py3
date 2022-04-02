@@ -2,37 +2,45 @@ from hado.util.debug import log
 from hado.core.config.shared import CONFIG_ENGINE
 from hado.core.plugin.resource import Resource
 from hado.core.plugin.monitoring import Monitoring
+from hado.core.plugin.driver import plugin_cmds, PluginType
 
 
 class App:
-    REACTIONS = ['stop', 'demote', 'leave']
     on_failure = CONFIG_ENGINE['DEFAULT_ACTION_FAILURE']
     on_shutdown = CONFIG_ENGINE['DEFAULT_ACTION_SHUTDOWN']
 
     def __init__(self, name: str, app: dict):
+        self._app_config = app
         self.name = name
         self.log_id = f"App - {self.name} -"
-
         self.resources = []
-        next_seq = self._get_highest_sequence(app['resources']) + 1
-        for n, res in app['resources'].items():
-            self.resources.append(Resource(
-                name=n,
-                config=res,
-                sequence=res['sequence'] if 'sequence' in res else next_seq,
-            ))
-            if 'sequence' not in res:
-                next_seq += 1
-
         self.monitoring = []
-        if 'monitoring' in app:
-            for n, mon in app['monitoring'].items():
-                self.monitoring.append(Monitoring(config=mon, name=n))
-
         self._set_attr(data=app, attr='on_failure')
         self._set_attr(data=app, attr='on_shutdown')
 
-        self.action('init')
+    def init_resources(self):
+        _init = False
+
+        if len(self.resources) == 0:
+            _init = True
+            next_seq = self._get_highest_sequence(self._app_config['resources']) + 1
+            for n, res in self._app_config['resources'].items():
+                self.resources.append(Resource(
+                    name=n,
+                    config=res,
+                    sequence=res['sequence'] if 'sequence' in res else next_seq,
+                ))
+                if 'sequence' not in res:
+                    next_seq += 1
+
+        if len(self.monitoring) == 0:
+            _init = True
+            if 'monitoring' in self._app_config:
+                for n, mon in self._app_config['monitoring'].items():
+                    self.monitoring.append(Monitoring(config=mon, name=n))
+
+        if _init:
+            self.action('init')
 
     def check(self):
         log(f"{self.log_id} Starting check!", lv=4)
@@ -40,6 +48,7 @@ class App:
         # failover handling should be abstracted into separate class
         # check handling should also be separated
 
+        # basic ideas => should probably be formed in some kind of 'mode-switches'
         # if failed
         #   try to recover
         #     wait (min time..) and try to start failed resources
@@ -64,52 +73,82 @@ class App:
         #       if this node is active => make sure no other is (stop)
 
     def failure(self):
-        log(f"{self.log_id} Starting failure actions!")
-        if self.on_failure in self.REACTIONS:
-            a = self.on_failure
-            for r in self.resources:
-                if r.on_failure is not None:
-                    a = r.on_failure
+        log(f"{self.log_id} Starting failure actions!", lv=2)
+        a = self.on_failure
+        for r in self.resources:
+            if r.on_failure is not None:
+                a = r.on_failure
 
-                if a != 'leave':
-                    r.action(a)
+            if a != 'leave':
+                r.action(a)
 
     def shutdown(self):
-        log(f"{self.log_id} Starting shutdown actions!")
-        if self.on_shutdown in self.REACTIONS:
-            a = self.on_shutdown
-            for r in self.resources:
-                if r.on_shutdown is not None:
-                    a = r.on_shutdown
+        log(f"{self.log_id} Starting shutdown actions!", lv=2)
+        a = self.on_shutdown
+        for r in self.resources:
+            if r.on_shutdown is not None:
+                a = r.on_shutdown
 
-                if a != 'leave':
-                    r.action(a)
+            if a != 'leave':
+                r.action(a)
 
     def action(self, do: str):
-        for r in self.resources:
-            r.action(do)
+        if do in plugin_cmds[PluginType.resource]:
+            for r in self.resources:
+                r.action(do)
+
+        elif do in plugin_cmds[PluginType.monitoring]:
+            for m in self.monitoring:
+                m.action(do)
+
+        else:
+            log(f"{self.log_id} Got unsupported action: '{do}' - ignoring!", lv=2)
+
+    def _res_exists(self) -> bool:
+        if len(self.resources) == 0:
+            return False
+
+        return True
+
+    def _mon_exists(self) -> bool:
+        if len(self.monitoring) == 0:
+            return False
+
+        return True
 
     @property
     def resource_health(self) -> float:
-        s = [r.status for r in self.resources]
-        return (100 / len(s)) * s.count(True)
+        if self._res_exists():
+            s = [r.status for r in self.resources]
+            return (100 / len(s)) * s.count(True)
+
+        return 0.0
 
     @property
     def monitoring_health(self) -> float:
-        s = [m.status for m in self.monitoring]
-        return (100 / len(s)) * s.count(True)
+        if self._mon_exists():
+            s = [m.status for m in self.monitoring]
+            return (100 / len(s)) * s.count(True)
+
+        return 0.0
 
     @property
     def health(self) -> float:
-        s = [r.status for r in self.resources]
-        s.extend([m.status for m in self.monitoring])
-        return (100 / len(s)) * s.count(True)
+        if self._res_exists() and self._mon_exists():
+            s = [r.status for r in self.resources]
+            s.extend([m.status for m in self.monitoring])
+            return (100 / len(s)) * s.count(True)
+
+        return 0.0
 
     @property
     def status(self) -> bool:
-        s = [r.status for r in self.resources if r.vital]
-        s.extend([m.status for m in self.resources if m.vital])
-        return all(s)
+        if self._res_exists() and self._mon_exists():
+            s = [r.status for r in self.resources if r.vital]
+            s.extend([m.status for m in self.monitoring if m.vital])
+            return all(s)
+
+        return False
 
     @property
     def failed(self) -> bool:

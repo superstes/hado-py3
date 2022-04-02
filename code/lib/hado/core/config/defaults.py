@@ -44,7 +44,7 @@ HARDCODED = {
         },
     },
     'ACTION': {
-        'VALID': ['stop', 'demote', 'leave'],
+        'VALID': ['stop', 'demote', 'leave', 'fix', 'restart'],
     },
     'LOG_MODE': {
         'VALID': ['debug', 'info', 'warning', 'error'],

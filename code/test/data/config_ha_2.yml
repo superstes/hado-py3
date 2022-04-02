@@ -11,6 +11,8 @@ a:  # minimal OK
           plugin_args: ['p1', 'p2']
           vital: true
           mode: 'as'
+          on_failure: 'demote'
+          on_shutdown: 'demote'
   _TEST: true
   _TEST_NSTDOUT: 'ERROR|WARNING|INFO'
 
@@ -59,6 +61,8 @@ f:  # no arguments when none are needed
           plugin: '_test1'
           vital: true
           mode: 'as'
+          on_failure: 'demote'
+          on_shutdown: 'demote'
   _TEST: true
   _TEST_STDOUT: 'INFO'
   _TEST_NSTDOUT: 'ERROR|WARNING'
@@ -71,6 +75,8 @@ g:  # no vitality
           plugin: '_test3'
           plugin_args: ['p1', 'p2']
           mode: 'as'
+          on_failure: 'demote'
+          on_shutdown: 'demote'
   _TEST: true
   _TEST_STDOUT: 'INFO'
   _TEST_NSTDOUT: 'ERROR|WARNING'
@@ -96,6 +102,8 @@ i:  # unsupported mode if fallback is provided by plugin
           plugin_args: 'placeholder'
           mode: 'as'
           vital: true
+          on_failure: 'demote'
+          on_shutdown: 'demote'
   _TEST: true
   _TEST_STDOUT: 'WARNING'
   _TEST_NSTDOUT: 'ERROR|INFO'
@@ -133,6 +141,50 @@ l:  # empty plugin args when none are needed
           plugin_args:
           vital: true
           mode: 'as'
+          on_failure: 'demote'
+          on_shutdown: 'demote'
+  _TEST: true
+  _TEST_STDOUT: 'INFO'
+  _TEST_NSTDOUT: 'ERROR|WARNING'
+
+m:  # error on invalid on_failure action
+  apps:
+    test:
+      resources:
+        test_ip_m:
+          plugin: '_test1'
+          plugin_args:
+          vital: true
+          mode: 'as'
+          on_failure: 'invalid'
+          on_shutdown: 'demote'
+  _TEST: false
+  _TEST_STDOUT: 'ERROR'
+
+n:  # error on invalid on_shutdown action
+  apps:
+    test:
+      resources:
+        test_ip_n:
+          plugin: '_test1'
+          plugin_args:
+          vital: true
+          mode: 'as'
+          on_failure: 'demote'
+          on_shutdown: 'invalid'
+  _TEST: false
+  _TEST_STDOUT: 'ERROR'
+
+o:  # info on unset on_shutdown|on_failure action
+  apps:
+    test:
+      resources:
+        test_ip_o:
+          plugin: '_test1'
+          plugin_args:
+          vital: true
+          mode: 'as'
+          on_shutdown: 'demote'
   _TEST: true
   _TEST_STDOUT: 'INFO'
   _TEST_NSTDOUT: 'ERROR|WARNING'

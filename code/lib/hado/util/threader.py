@@ -5,7 +5,6 @@
 # pylint: disable=R0913
 
 from threading import Thread, Event
-from time import sleep as time_sleep
 from datetime import timedelta
 from sys import exc_info as sys_exc_info
 from traceback import format_exc
@@ -34,7 +33,7 @@ class Workload(Thread):
         self.state_stop.set()
 
         try:
-            self.join(CONFIG_ENGINE['PROCESS_TIMEOUT'])
+            self.join(2)
             if self.is_alive():
                 log(f"Unable to join thread {self.log_name}", lv=2)
 
@@ -85,88 +84,123 @@ class Loop:
         for job in self.jobs:
             job.start()
 
-    def add_thread(
-            self, sleep_time: int, thread_data, description: str,
+    def add_thread_deco(
+            self, sleep: (int, float, timedelta), thread_data, description: str,
             once: bool = False, daemon: bool = True
     ):
-        log(f"Adding thread for \"{description}\" with interval \"{sleep_time}\"", lv=4)
+        log(f"Adding thread for \"{description}\" with interval \"{sleep}\"", lv=4)
         self.thread_nr += 1
+        if not isinstance(sleep, timedelta):
+            if sleep in [0, 0.0]:
+                once = True
+                sleep = 10
+
+            sleep = timedelta(seconds=sleep)
 
         def decorator(function):
-            if sleep_time == 0:
-                sleep_time_new = 10
-                self.jobs.add(
-                    Workload(
-                        sleep=timedelta(seconds=sleep_time_new),
-                        execute=function,
-                        data=thread_data,
-                        loop_instance=self,
-                        once=True,
-                        description=description,
-                        daemon=daemon,
-                        name=f"Thread #{self.thread_nr}",
-                    )
-                )
-            else:
-                self.jobs.add(
-                    Workload(
-                        sleep=timedelta(seconds=sleep_time),
-                        execute=function,
-                        data=thread_data,
-                        loop_instance=self,
-                        once=once,
-                        description=description,
-                        daemon=daemon,
-                        name=f"Thread #{self.thread_nr}",
-                    )
-                )
+            self.add_thread(
+                sleep=sleep,
+                execute=function,
+                thread_data=thread_data,
+                once=once,
+                description=description,
+                daemon=daemon,
+            )
             return function
+
         return decorator
 
-    def _block_root_process(self) -> None:
-        while True:
-            try:
-                time_sleep(1)
+    def add_thread(
+            self, execute, sleep: (int, float, timedelta), thread_data, description: str,
+            once: bool = False, daemon: bool = True
+    ):
+        self.thread_nr += 1
+        if not isinstance(sleep, timedelta):
+            if sleep in [0, 0.0]:
+                once = True
+                sleep = 10
 
-            except KeyboardInterrupt:
-                self.stop()
+            sleep = timedelta(seconds=sleep)
+
+        self.jobs.add(
+            Workload(
+                sleep=sleep,
+                execute=execute,
+                data=thread_data,
+                loop_instance=self,
+                once=once,
+                description=description,
+                daemon=daemon,
+                name=f"Thread #{self.thread_nr}",
+            )
+        )
 
     def stop(self) -> bool:
         log('Stopping all threads', lv=3)
 
-        for job in self.jobs:
-            job.stop()
+        job_list = list(self.jobs)
+        job_count = len(job_list)
+        for i in range(job_count):
+            _ = job_list[i]
+            self.jobs.remove(_)
+            del _
 
         log('All threads stopped. Exiting loop', lv=3)
-        return True
+        if len(self.jobs) == 0:
+            return True
 
-    def stop_thread(self, description: str):
+        return False
+
+    def stop_thread(self, description: str) -> bool:
         log(f"Stopping thread for \"{description}\"", lv=4)
-        for job in self.jobs:
-            if job.description == description:
-                job.stop()
-                self.jobs.remove(job)
-                log(f"Thread {job.description} stopped.", lv=3)
-                del job
-                break
+        job_list = list(self.jobs)
+        job_count = len(job_list)
+        for i in range(job_count):
+            _ = job_list[i]
+            if _.description == description:
+                self.jobs.remove(_)
+                log(f"Thread {_.description} stopped.", lv=3)
+                del _
+                return True
 
-    def start_thread(self, description: str) -> None:
+        return False
+
+    def start_thread(self, description: str) -> bool:
         for job in self.jobs:
             if job.description == description:
                 job.start()
                 log(f"Thread {job.description} started.", lv=4)
-                break
+                return True
 
-    def reload_thread(self, sleep_time: int, thread_data, description: str) -> None:
+        return False
+
+    def reload_thread(self, description: str, sleep: int = None, thread_data=None) -> bool:
         log(f"Reloading thread for \"{description}\"", lv=3)
-        self.stop_thread(description=description)
-        self.add_thread(
-            sleep_time=sleep_time,
-            thread_data=thread_data,
-            description=description,
-        )
-        self.start_thread(description=description)
+        current_thread = self.get_thread(description=description)
+
+        if current_thread:
+            self.stop_thread(description=description)
+            self.add_thread(
+                execute=current_thread.execute,
+                sleep=current_thread.sleep if sleep is None else sleep,
+                thread_data=current_thread.data if thread_data is None else thread_data,
+                description=current_thread.description if description is None else description,
+            )
+            self.start_thread(description=description)
+            return True
+
+        return False
+
+    def get_thread(self, description: str) -> (Workload, None):
+        for job in self.jobs:
+            if job.description == description:
+                return job
+
+        return None
 
     def list(self) -> list:
         log('Returning thread list', lv=4)
         return [job.data for job in self.jobs]
+
+    def __del__(self):
+        self.stop()

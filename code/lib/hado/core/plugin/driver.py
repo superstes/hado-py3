@@ -26,6 +26,7 @@ plugin_cmds = {
     PluginType.resource: [
         'start', 'stop', 'active', 'other', 'init',
         'fix', 'promote', 'demote', 'leader'
+        # NOTE: 'restart' and 'leave' are special cases and not directly mapped
     ]
 }
 
@@ -215,12 +216,21 @@ class Plugin:
 
         return False
 
+    def restart(self) -> bool:
+        start = False
+        stop = self.stop()
+
+        if stop:
+            start = self.start()
+
+        return all([stop, start])
+
     def promote(self) -> bool:
         # promote resource to cluster leader
         t = 'promote'
         if self._check_cmd_support(t=t, s=2):
             log(f"{self.log_id} Promoting to leader!", lv=3)
-            self._exec(t, cnlv=True)
+            self._exec(t, cnl=True)
             return True
 
         return False
@@ -230,7 +240,7 @@ class Plugin:
         t = 'demote'
         if self._check_cmd_support(t=t, s=3):
             log(f"{self.log_id} Demoting to worker!", lv=3)
-            self._exec(t, clv=True)
+            self._exec(t, cl=True)
             return True
 
         return False
