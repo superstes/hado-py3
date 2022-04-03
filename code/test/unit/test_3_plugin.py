@@ -5,6 +5,8 @@ from re import match as regex_match
 import pytest
 
 from hado.core.plugin.driver import Plugin, PluginType
+from hado.core.plugin.monitoring import Monitoring
+from hado.core.plugin.resource import Resource
 
 from .util import capsys_debug, capsys_warning, capsys_info
 
@@ -15,6 +17,13 @@ def mock_paths(mocker) -> dict:
     h['PATH_PLUGIN'] = f"{getcwd()}/../test/data/plugin"
     mocker.patch('hado.core.plugin.driver.HARDCODED', h)
     return h
+
+
+class PseudoPlugin:
+    def __init__(self, plugin_type: PluginType, name: str, args: (str, list)):
+        self.name = name
+        self.plugin_type = plugin_type
+        self.args = args
 
 
 class TestPlugins:
@@ -153,6 +162,12 @@ class TestPlugins:
         capsys_warning(stdout)
         assert not regex_match(f'.*not executing.*', stdout.replace('\n', ' '))
 
+        assert r3b.restart()
+        stdout, _ = capsys.readouterr()
+        capsys_warning(stdout)
+        assert regex_match(f'.*Stopping.*', stdout.replace('\n', ' '))
+        assert regex_match(f'.*Starting.*', stdout.replace('\n', ' '))
+
         assert r3b.promote()
         stdout, _ = capsys.readouterr()
         capsys_warning(stdout)
@@ -170,6 +185,9 @@ class TestPlugins:
         assert r3b.is_active
 
         del r3b
+
+    def test_plugin_exec_2(self, mocker, capsys):
+        mock_paths(mocker)
 
         r3c = Plugin(
             plugin_type=PluginType.resource,
@@ -246,3 +264,94 @@ class TestPlugins:
 
         del r3e
         del m3b
+
+    def test_plugin_monitoring(self, mocker):
+        mock_paths(mocker)
+        mocker.patch('hado.core.plugin.monitoring.Plugin', PseudoPlugin)
+        from hado.core.config.shared import CONFIG_ENGINE
+
+        m = Monitoring(
+            name='testMon1',
+            config={
+                'vital': True,
+                'plugin': 'testMon1Plug',
+                'interval': 9000,
+            }
+        )
+        assert hasattr(m, 'plugin')
+        assert m.interval == 9000
+        assert m.vital
+        del m
+
+        m = Monitoring(
+            name='testMon2',
+            config={
+                'vital': False,
+                'plugin': 'testMon2Plug',
+                'plugin_args': [],
+            }
+        )
+        assert m.interval == Monitoring.interval
+        assert not m.vital
+        del m
+
+        m = Monitoring(
+            name='testMon3',
+            config={
+                'plugin': 'testMon3Plug',
+            }
+        )
+        assert m.vital is CONFIG_ENGINE['DEFAULT_MONITORING_VITAL']
+        del m
+
+    def test_plugin_resource(self, mocker):
+        mock_paths(mocker)
+        mocker.patch('hado.core.plugin.resource.Plugin', PseudoPlugin)
+        from hado.core.config.shared import CONFIG_ENGINE
+
+        r = Resource(
+            name='testRes1',
+            config={
+                'vital': True,
+                'plugin': 'testRes1Plug',
+                'on_failure': 'restart',
+                'on_shutdown': 'stop',
+                'mode': 'active-standby',
+                'mode_prio': 100,
+            },
+            sequence=1
+        )
+        assert hasattr(r, 'plugin')
+        assert r.vital
+        assert r.sequence == 1
+        assert r.mode == 'active-standby'
+        assert r.mode_prio == 100
+        assert r.on_failure == 'restart'
+        assert r.on_shutdown == 'stop'
+        del r
+
+        r = Resource(
+            name='testRes2',
+            config={
+                'vital': False,
+                'plugin': 'testRes2Plug',
+                'plugin_args': [],
+            },
+            sequence=2
+        )
+        assert not r.vital
+        del r
+
+        r = Resource(
+            name='testRes3',
+            config={
+                'plugin': 'testRes3Plug',
+            },
+            sequence=3
+        )
+        assert r.vital is CONFIG_ENGINE['DEFAULT_RESOURCE_VITAL']
+        assert r.mode == Resource.mode
+        assert r.mode_prio == Resource.mode_prio
+        assert r.on_failure == Resource.on_failure
+        assert r.on_shutdown == Resource.on_shutdown
+        del r
