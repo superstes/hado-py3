@@ -7,13 +7,13 @@ a:  # minimal OK
     test_app_a:
       resources:
         test_ip:
-          plugin: '_test3'
+          plugin: '1c'
           plugin_args: 'p1 p2'
           vital: true
           mode: 'as'
       monitoring:
         test_ping:
-          plugin: '_test3'
+          plugin: '1c'
           plugin_args: 'placeholder'
           interval: 2
       peers:
@@ -33,7 +33,7 @@ b:  # invalid resource
           plugin: 'doesNotExist'
       monitoring:
         test_ping:
-          plugin: '_test3'
+          plugin: '1c'
           plugin_args: 'placeholder'
           interval: 2
       peers:
@@ -50,7 +50,7 @@ c:  # invalid monitoring
     test_app_c:
       resources:
         test_ip:
-          plugin: '_test3'
+          plugin: '1c'
           plugin_args: 'p1 p2'
           vital: true
           mode: 'as'
@@ -71,13 +71,13 @@ d:  # invalid peer
     test_app_d:
       resources:
         test_ip:
-          plugin: '_test3'
+          plugin: '1c'
           plugin_args: 'p1 p2'
           vital: true
           mode: 'as'
       monitoring:
         test_ping:
-          plugin: '_test3'
+          plugin: '1c'
           plugin_args: 'placeholder'
           interval: 2
       peers:

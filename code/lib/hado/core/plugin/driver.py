@@ -37,7 +37,7 @@ plugin_cmd_timeouts = {
 
 
 class Plugin:
-    def __init__(self, plugin_type: PluginType, name: str, args: str):
+    def __init__(self, plugin_type: PluginType, name: str, args: (str, list)):
         self.BASE = f"{HARDCODED['PATH_PLUGIN']}/{plugin_desc[plugin_type]}/{name}"
         self.NAME = name
         self.TYPE = plugin_type
@@ -95,7 +95,7 @@ class Plugin:
 
         return False
 
-    def _check_cmd_base(self, t: str) -> list:
+    def _check_build_cmd(self, t: str) -> list:
         cnf_exec = self.CONFIG[t]['exec']
 
         if not isinstance(cnf_exec, list):
@@ -123,18 +123,19 @@ class Plugin:
         else:
             cmd = [cnf_exec]
 
-        for f in cmd:
-            if f.find('/') != -1:
-                if not Path(f).is_file():
-                    raise FileNotFoundError(
-                        f"ERROR: {self.log_id} Executable "
-                        f"was not found: '{f}'"
-                        )
+        for part in cmd:
+            for f in part.split(' '):
+                if f.find('/') != -1:
+                    if not Path(f).is_file():
+                        raise FileNotFoundError(
+                            f"ERROR: {self.log_id} Executable "
+                            f"was not found: '{f}'"
+                            )
 
         return cmd
 
     def _get_cmd(self, t: str) -> list:
-        cmd = self._check_cmd_base(t=t)
+        cmd = self._check_build_cmd(t=t)
         cmd.extend(self.ARGS)
 
         if 'args' in self.CONFIG[t]:
@@ -186,11 +187,15 @@ class Plugin:
                 run = False
 
         if run:
+            shell = False
+            if 'shell' in self.CONFIG[t]:
+                shell = self.CONFIG[t]['shell']
+
             for k, v in plugin_cmd_timeouts.items():
                 if t in v:
-                    return subprocess(cmd=self._get_cmd(t=t), timeout=CONFIG_ENGINE[k])
+                    return subprocess(cmd=self._get_cmd(t=t), timeout=CONFIG_ENGINE[k], shell=shell)
 
-            return subprocess(cmd=self._get_cmd(t=t))
+            return subprocess(cmd=self._get_cmd(t=t), shell=shell)
 
         else:
             return '0'
@@ -200,7 +205,7 @@ class Plugin:
         t = 'start'
         if self._check_cmd_support(t=t, s=1):
             log(f"{self.log_id} Starting!", lv=3)
-            self._exec(t, cno=True, cna=True)
+            self._exec(t=t, cno=True, cna=True)
             return True
 
         return False
@@ -211,7 +216,7 @@ class Plugin:
         if self._check_cmd_support(t=t, s=1):
             log(f"{self.log_id} Stopping!", lv=2)
             self.demote()
-            self._exec(t, ca=True)
+            self._exec(t=t, ca=True)
             return True
 
         return False
@@ -230,7 +235,7 @@ class Plugin:
         t = 'promote'
         if self._check_cmd_support(t=t, s=2):
             log(f"{self.log_id} Promoting to leader!", lv=3)
-            self._exec(t, cnl=True)
+            self._exec(t=t, cnl=True)
             return True
 
         return False
@@ -240,7 +245,7 @@ class Plugin:
         t = 'demote'
         if self._check_cmd_support(t=t, s=3):
             log(f"{self.log_id} Demoting to worker!", lv=3)
-            self._exec(t, cl=True)
+            self._exec(t=t, cl=True)
             return True
 
         return False
@@ -250,7 +255,7 @@ class Plugin:
         t = 'init'
         if self._check_cmd_support(t=t, s=3):
             log(f"{self.log_id} Initializing!", lv=3)
-            self._exec(t)
+            self._exec(t=t)
             return True
 
         return False
@@ -282,39 +287,39 @@ class Plugin:
         t = 'check'
         if self._check_cmd_support(t=t, s=1):
             log(f"{self.log_id} running monitoring task.", lv=4)
-            return self._stdout_ok(self._exec(t))
+            return self._stdout_ok(self._exec(t=t))
 
         return False
 
     @property
-    def is_active(self) -> bool:
+    def is_active(self) -> (bool, None):
         # if resource is active
         t = 'active'
         if self._check_cmd_support(t=t, s=1):
             log(f"{self.log_id} checking if active.", lv=4)
-            return self._stdout_ok(self._exec(t))
+            return self._stdout_ok(self._exec(t=t))
 
-        return False
+        return None
 
     @property
-    def is_other(self) -> bool:
+    def is_other(self) -> (bool, None):
         # check if resource is active on another node
         t = 'other'
         if self._check_cmd_support(t=t, s=3):
             log(f"{self.log_id} checking if other is active.", lv=4)
-            return self._stdout_ok(self._exec(t))
+            return self._stdout_ok(self._exec(t=t))
 
-        return False
+        return None
 
     @property
-    def is_leader(self) -> bool:
+    def is_leader(self) -> (bool, None):
         # check if this node is the leader in a resource cluster
         t = 'leader'
         if self._check_cmd_support(t=t, s=3):
             log(f"{self.log_id} checking leader state.", lv=4)
-            return self._stdout_ok(self._exec(t))
+            return self._stdout_ok(self._exec(t=t))
 
-        return False
+        return None
 
     def __repr__(self):
         return f"HA-DO PLUGIN: {self.__dict__}"

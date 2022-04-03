@@ -7,7 +7,7 @@ a:  # minimal OK
     test:
       resources:
         test_ip_a:
-          plugin: '_test3'
+          plugin: '1c'
           plugin_args: ['p1', 'p2']
           vital: true
           mode: 'as'
@@ -39,7 +39,7 @@ d:  # no arguments when they are needed
     test:
       resources:
         test_ip_d:
-          plugin: '_test3'
+          plugin: '1c'
   _TEST: false
   _TEST_STDOUT: 'ERROR'
 
@@ -48,7 +48,7 @@ e:  # too few arguments
     test:
       resources:
         test_ip_e:
-          plugin: '_test3'
+          plugin: '1c'
           plugin_args: 'placeholder'
   _TEST: false
   _TEST_STDOUT: 'ERROR'
@@ -58,7 +58,7 @@ f:  # no arguments when none are needed
     test:
       resources:
         test_ip_f:
-          plugin: '_test1'
+          plugin: '1a'
           vital: true
           mode: 'as'
           on_failure: 'demote'
@@ -72,7 +72,7 @@ g:  # no vitality
     test:
       resources:
         test_ip_g:
-          plugin: '_test3'
+          plugin: '1c'
           plugin_args: ['p1', 'p2']
           mode: 'as'
           on_failure: 'demote'
@@ -86,7 +86,7 @@ h:  # invalid mode
     test:
       resources:
         test_ip_h:
-          plugin: '_test3'
+          plugin: '1c'
           plugin_args: ['p1', 'p2']
           mode: 'doesNotExist'
           vital: true
@@ -98,7 +98,7 @@ i:  # unsupported mode if fallback is provided by plugin
     test:
       resources:
         test_ip_i:
-          plugin: '_test1'
+          plugin: '1a'
           plugin_args: 'placeholder'
           mode: 'as'
           vital: true
@@ -113,7 +113,7 @@ j:  # unsupported mode without fallback
     test:
       resources:
         test_ip_j:
-          plugin: '_test2'
+          plugin: '1b'
           plugin_args: ['p1', 'p2']
           mode: 'as'
           vital: true
@@ -125,7 +125,7 @@ k:  # empty plugin args when needed
     test:
       resources:
         test_ip_k:
-          plugin: '_test3'
+          plugin: '1c'
           plugin_args:
           vital: true
           mode: 'as'
@@ -137,7 +137,7 @@ l:  # empty plugin args when none are needed
     test:
       resources:
         test_ip_l:
-          plugin: '_test1'
+          plugin: '1a'
           plugin_args:
           vital: true
           mode: 'as'
@@ -152,7 +152,7 @@ m:  # error on invalid on_failure action
     test:
       resources:
         test_ip_m:
-          plugin: '_test1'
+          plugin: '1a'
           plugin_args:
           vital: true
           mode: 'as'
@@ -166,7 +166,7 @@ n:  # error on invalid on_shutdown action
     test:
       resources:
         test_ip_n:
-          plugin: '_test1'
+          plugin: '1a'
           plugin_args:
           vital: true
           mode: 'as'
@@ -180,7 +180,7 @@ o:  # info on unset on_shutdown|on_failure action
     test:
       resources:
         test_ip_o:
-          plugin: '_test1'
+          plugin: '1a'
           plugin_args:
           vital: true
           mode: 'as'
@@ -188,5 +188,3 @@ o:  # info on unset on_shutdown|on_failure action
   _TEST: true
   _TEST_STDOUT: 'INFO'
   _TEST_NSTDOUT: 'ERROR|WARNING'
-
-# todo: plugin arguments as string instead of list must raise info log

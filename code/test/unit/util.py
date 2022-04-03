@@ -1,4 +1,4 @@
-from os import getcwd
+from re import match as regex_match
 
 HTTP_CODES = {
     'NF': 404,
@@ -7,15 +7,6 @@ HTTP_CODES = {
     'NI': 501,
     'OK': 200,
 }
-
-
-def mock_paths(mocker) -> dict:
-    from hado.core.config.defaults import HARDCODED
-    h = HARDCODED.copy()
-    h['PATH_CONFIG'] = f"{getcwd()}/../etc"
-    h['PATH_PLUGIN'] = f"{getcwd()}/../plugin"
-    mocker.patch('hado.core.config.defaults.HARDCODED', h)
-    return h
 
 
 def check_methods(p: str, c, u: str = 'get'):
@@ -36,3 +27,26 @@ def check_methods(p: str, c, u: str = 'get'):
     assert rd.status_code == HTTP_CODES['IM']
     rpa = c.patch(p)
     assert rpa.status_code == HTTP_CODES['IM']
+
+
+def match(m: str, i: str) -> bool:
+    if regex_match(m, i.replace('\n', ' ')):
+        return True
+
+    return False
+
+
+def capsys_error(i: str) -> bool:
+    return match(m='.*ERROR.*', i=i)
+
+
+def capsys_warning(i: str) -> bool:
+    return match(m='.*WARNING.*', i=i)
+
+
+def capsys_info(i: str) -> bool:
+    return match(m='.*INFO.*', i=i)
+
+
+def capsys_debug(i: str) -> bool:
+    return match(m='.*DEBUG.*', i=i)

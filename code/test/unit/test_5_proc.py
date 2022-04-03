@@ -8,6 +8,8 @@ from re import match as regex_match
 from hado.util.threader import Loop
 from hado.util.process import subprocess
 
+from .util import capsys_error
+
 
 def thread(threader, d: dict, desc: str):
     # pylint: disable=W0612
@@ -24,8 +26,8 @@ def thread(threader, d: dict, desc: str):
 def process_error(c) -> bool:
     stdout, stderr = c.readouterr()
     return any([
-        regex_match('.*ERROR.*', stdout.replace('\n', ' ')),
-        regex_match('.*ERROR.*', stderr.replace('\n', ' '))
+        capsys_error(stdout),
+        capsys_error(stderr)
     ])
 
 
@@ -168,24 +170,30 @@ class TestProcessing:
 
     def test_process_basic(self, capsys):
         test_file = f'/tmp/{time()}'
-        subprocess(cmd=f'touch {test_file}')
+        subprocess(cmd=['touch', test_file])
         assert Path(test_file).is_file()
         assert not process_error(capsys)
-        subprocess(cmd=[f'rm {test_file}'])
+        subprocess(cmd=['rm', test_file])
         assert not Path(test_file).is_file()
         assert not process_error(capsys)
 
     def test_process_stdout(self, capsys):
         test_file = f'/tmp/{time()}'
         test_string = 'fa9u3lowkw3h8rh'
-        subprocess(cmd=f"echo '{test_string}' > {test_file}")
+        subprocess(cmd=f"echo '{test_string}' > {test_file}", shell=True)
         assert Path(test_file).is_file()
         assert not process_error(capsys)
-        o = subprocess(cmd=[f'cat {test_file}'])
+        o = subprocess(cmd=['cat', test_file])
         assert o == test_string
         assert not process_error(capsys)
         remove(test_file)
 
     def test_process_failure(self, capsys):
-        subprocess(cmd=[f'rm /tmp/doesNotExist.raaaaaandoooommm'])
+        subprocess(cmd=['rm', '/tmp/doesNotExist.raaaaaandoooommm'])
         assert process_error(capsys)
+
+    def test_process_shell(self, capsys):
+        subprocess(cmd='touch /tmp/doesNotExist.raa')
+        stdout, _ = capsys.readouterr()
+        capsys_error(stdout)
+        assert regex_match(f'.*was not formatted as expected.*', stdout.replace('\n', ' '))

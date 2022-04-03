@@ -1,10 +1,17 @@
 # Test config-related functions
 
-from os import path, rename
+from os import path, rename, getcwd
 from re import match as regex_match
 import pytest
 
-from .util import mock_paths
+
+def mock_paths(mocker) -> dict:
+    from hado.core.config.defaults import HARDCODED
+    h = HARDCODED.copy()
+    h['PATH_CONFIG'] = f"{getcwd()}/../etc"
+    h['PATH_PLUGIN'] = f"{getcwd()}/../test/data/plugin"
+    mocker.patch('hado.core.config.defaults.HARDCODED', h)
+    return h
 
 
 def yaml_test_validation(c, e: dict):

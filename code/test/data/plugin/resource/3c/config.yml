@@ -1,0 +1,41 @@
+
+---
+
+description: "test resource for plugin-tests #3"
+
+# actions
+
+start:
+  exec: ['bash', 'generic.sh', 'start']
+
+stop:
+  exec: ['bash', 'generic.sh', 'stop']
+
+promote:
+  exec: ['bash', 'generic.sh', 'promote']
+
+demote:
+  exec: ['bash', 'generic.sh', 'demote']
+
+# checks
+
+active:
+  exec: ['bash', 'generic.sh', 'active']
+
+other:
+  exec: ['bash', 'generic.sh', 'other']
+
+leader:
+  exec: ['bash', 'generic.sh', 'leader']
+
+# special
+
+init:
+  exec: ['bash', 'generic.sh', 'init']
+
+fix:
+  exec: ['bash', 'generic.sh', 'fix']
+
+modes:
+  valid: ['standalone']
+  fallback: 'standalone'

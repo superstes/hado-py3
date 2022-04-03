@@ -1,0 +1,7 @@
+---
+
+description: "test monitoring-plugin for config-loader #2"
+
+check:
+  exec: ['bash', 'check.sh']  # start the monitoring check
+  args: 0

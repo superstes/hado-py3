@@ -3,5 +3,5 @@
 description: 'arg 1: a, arg 2: b'  # some description that makes the plugins usage easier
 
 check:
-  exec: ['/bin/bash', 'check.sh']  # start the monitoring check
+  exec: ['bash', 'check.sh']  # start the monitoring check
   args: 2

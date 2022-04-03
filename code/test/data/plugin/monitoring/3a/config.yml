@@ -1,0 +1,9 @@
+---
+
+description: "test monitoring for plugin-tests #1"
+
+# actions
+
+check:
+  exec: ['bash', 'check.sh']
+  args: 0

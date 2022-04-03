@@ -4,6 +4,8 @@ from re import match as regex_match
 
 from hado.core.app import App
 
+from .util import capsys_warning
+
 
 class PseudoPlugin:
     ACTIONS = {
@@ -189,8 +191,7 @@ class TestApp:
         # unsupported action should trigger warning
         a.action('unsupported')
         stdout, _ = capsys.readouterr()
-        s = stdout.replace('\n', ' ')
-        assert regex_match(f".*WARNING.*", s)
+        assert capsys_warning(stdout)
 
     def test_app_on_failure(self, mocker, capsys):
         mocker.patch('hado.core.app.Monitoring', PseudoPlugin)

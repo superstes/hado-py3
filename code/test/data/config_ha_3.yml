@@ -7,7 +7,7 @@ a:  # minimal OK
     test:
       monitoring:
         test_ping_a:
-          plugin: '_test3'
+          plugin: '1c'
           plugin_args: 'placeholder'
           interval: 2
   _TEST: true
@@ -36,7 +36,7 @@ d:  # no arguments when they are needed
     test:
       monitoring:
         test_ping_d:
-          plugin: '_test3'
+          plugin: '1c'
   _TEST: false
   _TEST_STDOUT: 'ERROR'
 
@@ -45,7 +45,7 @@ e:  # too few arguments
     test:
       monitoring:
         test_ping_e:
-          plugin: '_test1'
+          plugin: '1a'
           plugin_args: 'placeholder'
   _TEST: false
   _TEST_STDOUT: 'ERROR'
@@ -55,7 +55,7 @@ f:  # no arguments when none are needed
     test:
       monitoring:
         test_ping_f:
-          plugin: '_test2'
+          plugin: '1b'
           interval: 2
   _TEST: true
   _TEST_STDOUT: 'INFO'
@@ -66,7 +66,7 @@ g:  # no interval
     test:
       monitoring:
         test_ping_g:
-          plugin: '_test2'
+          plugin: '1b'
   _TEST: true
   _TEST_STDOUT: 'INFO'
   _TEST_NSTDOUT: 'ERROR|WARNING'
@@ -76,7 +76,7 @@ h:  # empty plugin args when needed
     test:
       monitoring:
         test_ping_h:
-          plugin: '_test1'
+          plugin: '1a'
           plugin_args:
   _TEST: false
   _TEST_STDOUT: 'ERROR'
@@ -86,7 +86,7 @@ i:  # empty plugin args when none needed
     test:
       monitoring:
         test_ping_i:
-          plugin: '_test2'
+          plugin: '1b'
           plugin_args:
   _TEST: true
   _TEST_STDOUT: 'INFO'

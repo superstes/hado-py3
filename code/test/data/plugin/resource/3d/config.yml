@@ -1,0 +1,23 @@
+
+---
+
+description: "test resource for plugin-tests #4"
+
+# actions
+
+start:
+  exec: ['bash', 'generic.sh', 'start']
+
+stop:
+  exec: ['bash', 'generic.sh', 'stop']
+
+# checks
+
+active:
+  exec: ['bash', 'generic.sh', 'active']
+
+other:
+  exec: ['bash', 'generic.sh', 'other']
+
+leader:
+  exec: ['bash', 'generic.sh', 'leader']
