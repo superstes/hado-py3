@@ -2,4 +2,5 @@
 
 # shellcheck disable=SC2164
 cd "$(dirname "$0")"
-python3 -m pytest ../test/
+cd "../code/lib"
+python3 -m pytest "../test/"

@@ -2,6 +2,7 @@
 
 # shellcheck disable=SC2164
 cd "$(dirname "$0")"
+cd "../code/lib"
 
 py39venv="$(pwd)/../../venv/lib/python3.9/site-packages/"
 py39venvGH='/opt/hostedtoolcache/Python/3.9.10/x64/lib/python3.9/site-packages'

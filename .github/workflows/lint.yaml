@@ -36,4 +36,4 @@ jobs:
 
       - name: Run linting
         run: |
-          bash code/lib/run_lint.sh
+          bash script/run_lint.sh
