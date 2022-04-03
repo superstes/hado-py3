@@ -28,3 +28,26 @@ class Monitoring(BasePluginUse):
 
     def __repr__(self):
         return f"HA-DO MONITORING: {self.__dict__}"
+
+
+class SystemMonitoring(BasePluginUse):
+    plugin_type = PluginType.monitoring
+    interval = CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']
+
+    def __init__(self, name: str, config: dict):
+        super().__init__(
+            vital=True,  # system is always vital
+            plugin=Plugin(
+                plugin_type=self.plugin_type,
+                name=config['plugin'],
+                args=config['plugin_args'] if 'plugin_args' in config else [],
+            )
+        )
+        self.name = name
+        self._set_attr(data=config, attr='interval')
+
+    def check(self) -> bool:
+        return self.plugin.check()
+
+    def __repr__(self):
+        return f"HA-DO SYSTEM-MONITORING: {self.__dict__}"

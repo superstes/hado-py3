@@ -166,6 +166,7 @@ class TestConfigLoader:
 
             # mocking 'app' so that the test is not reaching too deep
             mocker.patch('hado.core.app.App.__init__', return_value=None)
+            mocker.patch('hado.core.plugin.monitoring.SystemMonitoring.__init__', return_value=None)
 
             try:
                 cnf = DeserializeConfig(config_ha=e, config_engine=CONFIG_ENGINE).get()

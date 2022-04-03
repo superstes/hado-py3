@@ -154,6 +154,17 @@ class App:
     def failed(self) -> bool:
         return not self.status
 
+    @property
+    def stats(self) -> dict:
+        return {
+            'status': self.status,
+            'health': self.health,
+            'health_res': self.resource_health,
+            'health_mon': self.monitoring_health,
+            'resources': {r.name: r.status for r in self.resources},
+            'monitoring': {m.name: m.status for m in self.monitoring},
+        }
+
     def _set_attr(self, data: dict, attr: str):
         if attr in data:
             setattr(self, attr, data[attr])

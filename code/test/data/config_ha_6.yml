@@ -23,7 +23,10 @@ a:  # minimal OK
 
   system:
     monitoring:
-      test:
+      test_ping:
+        plugin: '1c'
+        plugin_args: 'placeholder'
+        interval: 2
 
   _TEST: true
   _TEST_STDOUT: 'INFO'  # always

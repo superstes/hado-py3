@@ -4,6 +4,8 @@ from hado.util.debug import log
 from hado.core.config.validate import validate
 from hado.core.config.defaults import HARDCODED
 from hado.core.app import App
+from hado.core.plugin.monitoring import SystemMonitoring
+from hado.core.system import System
 from hado.util.helper import value_exists
 from hado.core.plugin.util import existing_plugins, max_plugin_args, enough_args, supported_mode
 from hado.core.config.util import valid_host
@@ -16,7 +18,7 @@ class DeserializeConfig:
         self.CONFIG_ENGINE = config_engine
         self.LOADED = {
             'apps': [],
-            'system': None,  # system settings
+            'system': System(monitoring=[]),
             'peers': []  # global peers
         }
         self.PLUGINS = existing_plugins()
@@ -30,8 +32,11 @@ class DeserializeConfig:
             log('Got invalid HA config - exiting!')
             raise ValueError
 
+        # peers
         glob_peers = self.CONFIG_HA['peers'] if 'peers' in self.CONFIG_HA else {}
+        # todo: create peer-objects from config
 
+        # apps
         for name, app in self.CONFIG_HA['apps'].items():
             # use global peers if no app-specific ones are defined
             app['peers'] = glob_peers | app['peers'] if 'peers' in app else {}
@@ -42,6 +47,24 @@ class DeserializeConfig:
         if not value_exists(data=self.LOADED, key='apps'):
             log('No app could be loaded - exiting!')
             raise ValueError
+
+        # system
+        if value_exists(data=self.CONFIG_HA, key='system') and \
+                value_exists(data=self.CONFIG_HA['system'], key='monitoring'):
+            sys_mon_ok = True
+            sys_mon = []
+            for name, mon in self.CONFIG_HA['system']['monitoring'].items():
+                if not self._check_monitoring(name=name, mon=mon, sys=True):
+                    sys_mon_ok = False
+
+                else:
+                    sys_mon.append(SystemMonitoring(name=name, config=mon))
+
+            if not sys_mon_ok:
+                log(f"System - found config error in monitoring!")
+                raise ValueError
+
+            self.LOADED['system'].monitoring = sys_mon
 
         return self.LOADED
 
@@ -217,7 +240,7 @@ class DeserializeConfig:
 
         return True
 
-    def _check_monitoring(self, name: str, mon: dict) -> bool:
+    def _check_monitoring(self, name: str, mon: dict, sys: bool = False) -> bool:
         if not value_exists(data=mon, key='plugin'):
             log(f"Monitoring '{name}' has no plugin configured!")
             return False
@@ -246,6 +269,13 @@ class DeserializeConfig:
             log(
                 f"Monitoring '{name}' has no interval configured - "
                 f"using default: '{self.CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']}'!",
+                lv=3
+            )
+
+        if not sys and not value_exists(data=mon, key='vital'):
+            log(
+                f"Monitoring '{name}' has no vitality configured - "
+                f"using default: '{self.CONFIG_ENGINE['DEFAULT_MONITORING_VITAL']}'!",
                 lv=3
             )
 

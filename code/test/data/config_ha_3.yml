@@ -10,6 +10,7 @@ a:  # minimal OK
           plugin: '1c'
           plugin_args: 'placeholder'
           interval: 2
+          vital: true
   _TEST: true
   _TEST_NSTDOUT: 'ERROR|WARNING|INFO'
 
@@ -88,6 +89,18 @@ i:  # empty plugin args when none needed
         test_ping_i:
           plugin: '1b'
           plugin_args:
+  _TEST: true
+  _TEST_STDOUT: 'INFO'
+  _TEST_NSTDOUT: 'ERROR|WARNING'
+
+j:  # info if default vitality is used
+  apps:
+    test:
+      monitoring:
+        test_ping_j:
+          plugin: '1c'
+          plugin_args: 'placeholder'
+          interval: 2
   _TEST: true
   _TEST_STDOUT: 'INFO'
   _TEST_NSTDOUT: 'ERROR|WARNING'

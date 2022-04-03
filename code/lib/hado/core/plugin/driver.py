@@ -337,3 +337,7 @@ class BasePluginUse:
     def _set_attr(self, data: dict, attr: str):
         if attr in data:
             setattr(self, attr, data[attr])
+
+    @property
+    def stats(self) -> dict:
+        return {self.name: self.status}
