@@ -1,40 +1,46 @@
 #!/usr/bin/env bash
 
-TIMEOUT="0.2"
+D_TIMEOUT="0.2"
+TIMEOUT="$D_TIMEOUT"
+HELP=false
 
 for i in "$@"; do
   case $i in
     -t=*|--target=*)
       TARGET="${i#*=}"
-      shift # past argument=value
+      shift
       ;;
     -s=*|--source=*)
       SOURCE="${i#*=}"
-      shift # past argument=value
+      shift
       ;;
     -w=*|--wait=*)
       TIMEOUT="${i#*=}"
-      shift # past argument=value
+      shift
+      ;;
+    -h*|--help*|?)
+      HELP=true
+      shift
       ;;
     *)
       ;;
   esac
 done
 
-if [ -z "$TARGET" ]
+if $HELP || [ -z "$TARGET" ]
 then
-  echo "Error: No arguments supplied!"
   echo "Usage: '-t' => ping target (pe: '-t=1.1.1.1')"
   echo "       '-s' => ping source ip (optional)"
-  echo "       '-w' => timeout in seconds (optional, pe: '-w=0.3', default=$TIMEOUT)"
+  echo "       '-w' => timeout in seconds (optional, pe: '-w=0.3', default='$D_TIMEOUT')"
+  echo "       '-h' => show help (optional)"
   exit 1
 fi
 
 if [ -z "$SOURCE" ]
 then
-  timeout "$TIMEOUT" ping -c1 "$TARGET" -q >/dev/null 2>/dev/null
+  timeout "$TIMEOUT" ping -c1 "$TARGET" -q >/dev/null 2>&1
 else
-  timeout "$TIMEOUT" ping -c1 "$TARGET" -I "$SOURCE" -q >/dev/null 2>/dev/null
+  timeout "$TIMEOUT" ping -c1 "$TARGET" -I "$SOURCE" -q >/dev/null 2>&1
 fi
 
 # shellcheck disable=SC2181

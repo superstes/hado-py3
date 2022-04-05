@@ -3,7 +3,7 @@
 #   resource ipaddr
 
 Cmnd_Alias HADO_PLUGIN_RES_IPADDR = \
-ip address del *, \
-ip address add *
+  /usr/bin/ip address del *, \
+  /usr/bin/ip address add *
 
 hado ALL=(ALL) NOPASSWD: HADO_PLUGIN_RES_IPADDR

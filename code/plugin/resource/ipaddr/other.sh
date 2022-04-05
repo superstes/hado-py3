@@ -6,7 +6,7 @@ TIMEOUT="0.2"
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 source "${script_dir}/util.sh"
 
-timeout "$TIMEOUT" ping -c1 "$IP" -I "$DEV" -q >/dev/null 2>/dev/null
+timeout "$TIMEOUT" ping -c1 "$IP" -I "$DEV" -q >/dev/null 2>&1
 
 # shellcheck disable=SC2181
 if [ "$?" == "0" ]
@@ -14,7 +14,7 @@ then
   echo 1
   exit 0
 else
-  timeout "$TIMEOUT" ping -c1 "$IP" -q >/dev/null 2>/dev/null
+  timeout "$TIMEOUT" ping -c1 "$IP" -q >/dev/null 2>&1
   if [ "$?" == "0" ]
   then
     echo 1

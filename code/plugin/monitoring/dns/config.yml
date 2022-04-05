@@ -1,0 +1,7 @@
+---
+
+description: "-r: record to query, -c: value to compare, -t: type of record to query (optional, pe: '-t=MX', default='A'), -s: nameserver to use (optional, pe: '-s=192.168.0.1', default='1.1.1.1'), -w: timeout in seconds (optional, pe: '-w=0.3', default='0.2'), -p: protocol to use (optional, pe: '-p=tcp', options='tcp,udp', default='udp')"
+
+check:
+  exec: ['bash', 'check.sh']  # start the monitoring check
+  args: 2

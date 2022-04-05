@@ -1,25 +1,31 @@
 #!/usr/bin/env bash
 
+HELP=false
+
 for i in "$@"; do
   case $i in
     -i=*|--ip=*)
       IP="${i#*=}"
-      shift # past argument=value
+      shift
       ;;
     -d=*|--dev=*)
       DEV="${i#*=}"
-      shift # past argument=value
+      shift
+      ;;
+    -h*|--help*|?)
+      HELP=true
+      shift
       ;;
     *)
       ;;
   esac
 done
 
-if [ -z "$IP" ] || [ -z "$DEV" ]
+if $HELP || [ -z "$IP" ] || [ -z "$DEV" ]
 then
-  echo "Error: Not enough arguments supplied!"
   echo "Usage: '-i' => ip address (pe: '-i=10.10.4.2')"
   echo "       '-d' => device to add the ip to (pe: '-d=eno1')"
+  echo "       '-h' => show help (optional)"
   exit 1
 fi
 

@@ -1,19 +1,24 @@
 #!/usr/bin/env bash
 
+HELP=false
+
 for i in "$@"; do
   case $i in
     -u=*|--unit=*)
       SVC="${i#*=}"
-      shift # past argument=value
+      shift
+      ;;
+    -h*|--help*|?)
+      HELP=true
+      shift
       ;;
     *)
       ;;
   esac
 done
 
-if [ -z "$SVC" ]
+if $HELP || [ -z "$SVC" ]
 then
-  echo "Error: No arguments supplied!"
   echo "Usage: '-u' => systemd unit name (pe: '-u=networking.service')"
   exit 1
 fi
