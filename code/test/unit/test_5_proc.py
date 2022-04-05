@@ -127,9 +127,11 @@ class TestProcessing:
 
         sleep(0.3)
         del t
-        assert isinstance(tl, list)
+        assert isinstance(tl, set)
         assert len(tl) == 1
-        assert isinstance(tl[0], dict)
+        tl_item = list(tl)[0]
+        assert hasattr(tl_item, 'data')
+        assert isinstance(tl_item.data, dict)
 
     def test_thread_reload(self):
         test_file = f'/tmp/{time()}'

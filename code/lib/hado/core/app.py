@@ -1,13 +1,13 @@
 from hado.util.debug import log
-from hado.core.config.shared import CONFIG_ENGINE
+from hado.core.config import shared
 from hado.core.plugin.resource import Resource
 from hado.core.plugin.monitoring import Monitoring
 from hado.core.plugin.driver import plugin_cmds, PluginType
 
 
 class App:
-    on_failure = CONFIG_ENGINE['DEFAULT_ACTION_FAILURE']
-    on_shutdown = CONFIG_ENGINE['DEFAULT_ACTION_SHUTDOWN']
+    on_failure = shared.CONFIG_ENGINE['DEFAULT_ACTION_FAILURE']
+    on_shutdown = shared.CONFIG_ENGINE['DEFAULT_ACTION_SHUTDOWN']
 
     def __init__(self, name: str, app: dict):
         self._app_config = app

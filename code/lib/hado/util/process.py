@@ -5,13 +5,14 @@ from subprocess import PIPE as SUBPROCESS_PIPE
 from subprocess import TimeoutExpired
 
 from hado.util.debug import log
-from hado.core.config.shared import CONFIG_ENGINE
+from hado.core.config import shared
 
 
 def subprocess(
         cmd: (list, str),
-        timeout: int = CONFIG_ENGINE['PROCESS_TIMEOUT_MONITORING'],
-        shell: bool = False
+        timeout: int = shared.CONFIG_ENGINE['PROCESS_TIMEOUT_MONITORING'],
+        shell: bool = False,
+        error_expected: bool = False,
 ) -> str:
     if not isinstance(cmd, list):
         cmd = [cmd]
@@ -47,7 +48,7 @@ def subprocess(
     if exit_code == 0 and stderr in ['', ' ', None]:
         log(f"Process output: \"{stdout}\"", lv=4)
 
-    else:
+    elif not error_expected:
         log(
             f"Got error while processing command {cmd}: "
             f"exit-code {exit_code} - \"{stderr}\" | output: \"{stdout}\""

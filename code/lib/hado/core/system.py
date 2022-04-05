@@ -1,4 +1,4 @@
-from hado.core.config.shared import CONFIG_LOADED
+from hado.core.config import shared
 
 
 class System:
@@ -9,13 +9,13 @@ class System:
 
     @property
     def health(self) -> float:
-        h = [app.health for app in CONFIG_LOADED['apps']]
+        h = [app.health for app in shared.CONFIG_LOADED['apps']]
         h.append(self.system_health)
         return sum(h) / len(h)
 
     @property
     def status(self) -> bool:
-        s = [app.status for app in CONFIG_LOADED['apps']]
+        s = [app.status for app in shared.CONFIG_LOADED['apps']]
         s.append(self.system_status)
         return all(s)
 

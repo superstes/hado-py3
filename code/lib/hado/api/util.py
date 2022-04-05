@@ -1,7 +1,7 @@
 from ipaddress import ip_address
 from flask import request, abort
 
-from hado.core.config.shared import CONFIG_ENGINE
+from hado.core.config import shared
 from hado.util.debug import log
 
 HTTP_STATI = {
@@ -18,8 +18,8 @@ def client_ip():
 def deny_public():
     # security measurement => don't allow access from public ips by default
     ip = client_ip()
-    if not CONFIG_ENGINE['API_PUBLIC_ALLOW_ANY']:
-        if ip not in CONFIG_ENGINE['API_PUBLIC_ACCEPTLIST'] and \
+    if not shared.CONFIG_ENGINE['API_PUBLIC_ALLOW_ANY']:
+        if ip not in shared.CONFIG_ENGINE['API_PUBLIC_ACCEPTLIST'] and \
                 ip_address(ip).is_global:
             log(
                 f"Denying access to rest-server for ip '{ip}' "
@@ -31,7 +31,7 @@ def deny_public():
 
 def deny_nonlocal(ip):
     # security measurement => don't allow access from public ips by default
-    if not CONFIG_ENGINE['API_POST_ACCEPT_NON_LOCAL']:
+    if not shared.CONFIG_ENGINE['API_POST_ACCEPT_NON_LOCAL']:
         if not ip_address(ip).is_loopback:
             log(
                 f"Denying post-access to rest-server for ip '{ip}' "
@@ -40,7 +40,7 @@ def deny_nonlocal(ip):
             )
             abort(HTTP_STATI['DENIED'])
 
-    elif ip not in CONFIG_ENGINE['API_POST_ACCEPTLIST']:
+    elif ip not in shared.CONFIG_ENGINE['API_POST_ACCEPTLIST']:
         log(
             f"Denying post-access to rest-server for ip '{ip}' "
             f"as the ip is non-loopback and not accept-listed!",

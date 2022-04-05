@@ -10,7 +10,7 @@ from sys import exc_info as sys_exc_info
 from traceback import format_exc
 
 from hado.util.debug import log
-from hado.core.config.shared import CONFIG_ENGINE
+from hado.core.config import shared
 
 
 class Workload(Thread):
@@ -67,7 +67,7 @@ class Workload(Thread):
         except Exception as e:
             exc_type, _, _ = sys_exc_info()
             log(f"Thread {self.log_name} failed with error: \"{exc_type} - {e}\"")
-            log(f"{format_exc(limit=CONFIG_ENGINE['TRACEBACK_LINES'])}")
+            log(f"{format_exc(limit=shared.CONFIG_ENGINE['TRACEBACK_LINES'])}")
 
             if not self.once:
                 self.run()
@@ -198,9 +198,9 @@ class Loop:
 
         return None
 
-    def list(self) -> list:
+    def list(self) -> set:
         log('Returning thread list', lv=4)
-        return [job.data for job in self.jobs]
+        return self.jobs
 
     def __del__(self):
         self.stop()

@@ -42,7 +42,9 @@ class DeserializeConfig:
             app['peers'] = glob_peers | app['peers'] if 'peers' in app else {}
 
             if self._check_app(name=name, app=app):
-                self.LOADED['apps'].append(App(name=name, app=app))
+                _a = App(name=name, app=app)
+                _a.init_resources()
+                self.LOADED['apps'].append(_a)
 
         if not value_exists(data=self.LOADED, key='apps'):
             log('No app could be loaded - exiting!')
@@ -102,8 +104,10 @@ class DeserializeConfig:
         log(f"Checking config for app '{name}'.", lv=3)
 
         if not value_exists(data=app, key='peers'):
-            log(f"App '{name}' has no peers configured!")
-            return False
+            log(f"App '{name}' has no peers configured!", lv=2)
+            if not value_exists(data=self.CONFIG_HA, key='peers'):
+                log(f"App '{name}' neither app-specific nor global peers are configured!")
+                return False
 
         if not value_exists(data=app, key='resources'):
             log(f"App '{name}' has no resources configured!")

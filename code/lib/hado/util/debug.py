@@ -1,9 +1,31 @@
-from hado.core.config.shared import CONFIG_ENGINE
 from hado.core.config.defaults import HARDCODED
+
+# pylint: disable=C0415
+# startup-fallback (before shared-vars got initialized)
+
+
+def get_debug() -> bool:
+    try:
+        from hado.core.config import shared
+        return shared.CONFIG_ENGINE['DEBUG']
+
+    except AttributeError:
+        from hado.core.config.defaults import ENGINE
+        return ENGINE['DEBUG']
+
+
+def get_log_mode() -> bool:
+    try:
+        from hado.core.config import shared
+        return shared.CONFIG_ENGINE['LOG_MODE']
+
+    except AttributeError:
+        from hado.core.config.defaults import ENGINE
+        return ENGINE['LOG_MODE']
 
 
 def log(msg: str, lv: int = 1):
-    cnf_ll = HARDCODED['LOG_MODE']['MAPPING'][CONFIG_ENGINE['LOG_MODE']]
+    cnf_ll = HARDCODED['LOG_MODE']['MAPPING'][get_log_mode()]
 
-    if CONFIG_ENGINE['DEBUG'] or cnf_ll >= lv:
+    if get_debug() or cnf_ll >= lv:
         print(f"{HARDCODED['LOG_MODE']['MAPPING_REV'][lv]}: {msg}")

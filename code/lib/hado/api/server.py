@@ -1,7 +1,7 @@
 from waitress import serve
 from flask import Flask, abort
 
-from hado.core.config.shared import CONFIG_ENGINE
+from hado.core.config import shared
 from hado.util.debug import log
 from hado.api.util import client_ip, deny_public, HTTP_STATI
 from hado.api.get import api_get
@@ -15,12 +15,12 @@ api.register_blueprint(api_post)
 
 def start():
     # pylint: disable=W0703
-    port = CONFIG_ENGINE['API_LISTEN_PORT']
+    port = shared.CONFIG_ENGINE['API_LISTEN_PORT']
     log(f'Starting rest-server on port {port}.', lv=3)
     try:
         serve(
             app=api.wsgi_app,
-            host=CONFIG_ENGINE['API_LISTEN_IP'],
+            host=shared.CONFIG_ENGINE['API_LISTEN_IP'],
             port=port,
         )
 

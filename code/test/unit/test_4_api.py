@@ -41,22 +41,25 @@ class PseudoApp:
 TEST_PLUGIN_R = PseudoPlugin(n='TestRes1')
 TEST_PLUGIN_M = PseudoPlugin(n='TestMon1')
 TEST_SYSTEM = System(monitoring=[])
-TEST_CONFIG = {
-    'apps': [
-        PseudoApp(
-            r=[TEST_PLUGIN_R],
-            m=[TEST_PLUGIN_M]
-        )
-    ],
-    'system': TEST_SYSTEM,
-    'peers': [],
-}
+
+
+class PseudoConfig:
+    CONFIG_LOADED = {
+        'apps': [
+            PseudoApp(
+                r=[TEST_PLUGIN_R],
+                m=[TEST_PLUGIN_M]
+            )
+        ],
+        'system': TEST_SYSTEM,
+        'peers': [],
+    }
 
 
 @pytest.fixture
 def app(mocker):
-    mocker.patch('hado.api.get.CONFIG_LOADED', TEST_CONFIG)
-    mocker.patch('hado.core.system.CONFIG_LOADED', TEST_CONFIG)
+    mocker.patch('hado.api.get.shared', PseudoConfig)
+    mocker.patch('hado.core.system.shared', PseudoConfig)
     return api
 
 
@@ -97,7 +100,7 @@ class TestAPIStati:
         assert rg.status_code == HTTP_CODES['OK']
         assert rg.content_type == 'application/json'
         assert json_loads(rg.data) == TEST_SYSTEM.stats | {
-            'apps': [app.stats for app in TEST_CONFIG['apps']],
+            'apps': {app.name: app.stats for app in PseudoConfig.CONFIG_LOADED['apps']},
         }
         check_methods(p=path, c=client)
 

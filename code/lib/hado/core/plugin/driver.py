@@ -8,7 +8,7 @@ from yaml import safe_load as yaml_load
 from hado.util.process import subprocess
 from hado.util.debug import log
 from hado.core.config.defaults import HARDCODED
-from hado.core.config.shared import CONFIG_ENGINE
+from hado.core.config import shared
 
 
 class PluginType(Enum):
@@ -32,7 +32,7 @@ plugin_cmds = {
 
 plugin_cmd_timeouts = {
     'PROCESS_TIMEOUT_ACTION': ['start', 'stop', 'init', 'fix', 'promote', 'demote'],
-    'PROCESS_TIMEOUT_MONITORING': ['active', 'other', 'leader'],
+    'PROCESS_TIMEOUT_MONITORING': ['active', 'other', 'leader', 'check'],
 }
 
 
@@ -125,7 +125,7 @@ class Plugin:
 
         for part in cmd:
             for f in part.split(' '):
-                if f.find('/') != -1:
+                if f.strip().startswith('/'):
                     if not Path(f).is_file():
                         raise FileNotFoundError(
                             f"ERROR: {self.log_id} Executable "
@@ -155,21 +155,26 @@ class Plugin:
 
     # pylint: disable=R0913
     def _exec(self, t: str,
-              cno: bool = False,
+              cno: bool = False, co: bool = False,
               ca: bool = False, cna: bool = False,
               cnl: bool = False, cl: bool = False,
               ) -> str:
         run = True
 
-        if cno and 'other' in self.CMDS:
-            if self.is_other:
+        if (co or cno) and 'other' in self.CMDS:
+            other = self.is_other
+            if cno and other:
                 log(f"{self.log_id} other node is active - not executing '{t}'!", lv=2)
+                run = False
+
+            if co and not other:
+                log(f"{self.log_id} other node inactive - not executing '{t}'!", lv=2)
                 run = False
 
         if (ca or cna) and 'active' in self.CMDS:
             active = self.is_active
             if ca and not active:
-                log(f"{self.log_id} is not active - not executing '{t}'!", lv=2)
+                log(f"{self.log_id} is inactive - not executing '{t}'!", lv=2)
                 run = False
 
             if cna and active:
@@ -191,14 +196,30 @@ class Plugin:
             if 'shell' in self.CONFIG[t]:
                 shell = self.CONFIG[t]['shell']
 
+            error_expected = False
+            if t in plugin_cmd_timeouts['PROCESS_TIMEOUT_MONITORING']:
+                error_expected = True
+
             for k, v in plugin_cmd_timeouts.items():
                 if t in v:
-                    return subprocess(cmd=self._get_cmd(t=t), timeout=CONFIG_ENGINE[k], shell=shell)
+                    result = subprocess(
+                        cmd=self._get_cmd(t=t),
+                        timeout=shared.CONFIG_ENGINE[k],
+                        shell=shell,
+                        error_expected=error_expected,
+                    )
 
-            return subprocess(cmd=self._get_cmd(t=t), shell=shell)
+            result = subprocess(
+                cmd=self._get_cmd(t=t),
+                shell=shell,
+                error_expected=error_expected,
+            )
 
         else:
-            return '0'
+            result = '0'
+
+        log(f"{self.log_id} execution result for action '{t}': {result}", lv=4)
+        return result
 
     def start(self) -> bool:
         # start resource
@@ -235,7 +256,7 @@ class Plugin:
         t = 'promote'
         if self._check_cmd_support(t=t, s=2):
             log(f"{self.log_id} Promoting to leader!", lv=3)
-            self._exec(t=t, cnl=True)
+            self._exec(t=t, cnl=True, cno=True)
             return True
 
         return False
@@ -329,10 +350,6 @@ class BasePluginUse:
     def __init__(self, vital: bool, plugin: Plugin):
         self.vital = vital
         self.plugin = plugin
-
-    @property
-    def status(self):
-        return self.plugin.is_active
 
     def _set_attr(self, data: dict, attr: str):
         if attr in data:

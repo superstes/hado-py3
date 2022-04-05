@@ -23,6 +23,8 @@
 #   (export PYTHONPATH=/var/lib/hado)
 #   it's being set automatically by the systemd service
 
+# pylint: disable=C0415
+
 import signal
 from traceback import format_exc
 from pathlib import Path
@@ -31,11 +33,10 @@ from time import sleep as time_sleep
 from sys import exc_info as sys_exc_info
 from yaml import safe_load as yaml_load
 
-from hado.util.threader import Loop as Thread
 from hado.util.debug import log
-from hado.api import server
-from hado.core.config.defaults import HARDCODED
+from hado.core.config.defaults import HARDCODED, ENGINE
 from hado.core.config.dump import dump_defaults
+from hado.core.config import shared as config
 
 
 class Service:
@@ -44,13 +45,20 @@ class Service:
         signal.signal(signal.SIGTERM, self.stop)
         signal.signal(signal.SIGINT, self.stop)
         self.CONFIG_HA = {}
-        self.CONFIG_ENGINE = {}
-        self.CONFIG_LOADED = {}
+        self.CONFIG_ENGINE = ENGINE
         self._init_config()
+        # import only possible after config-initialization
+        from hado.core.config.load import DeserializeConfig
+        from hado.util.threader import Loop as Thread
+        config.CONFIG_LOADED = DeserializeConfig(
+            config_ha=self.CONFIG_HA,
+            config_engine=self.CONFIG_ENGINE,
+        ).get()
         self.THREADER = Thread()
 
     def start(self):
         try:
+            from hado.api import server  # import only possible after config-initialization
             self._thread(i=1, desc='HA-DO Rest-Server', d={'run': server, 'method': 'start'})
 
             self.THREADER.start()
@@ -65,33 +73,34 @@ class Service:
 
     @staticmethod
     def stop(signum=None, stack=None):
-        log(f"Service received signal {signum}", lv=2)
+        if signum is not None:
+            log(f"Service received signal {signum}", lv=2)
+
         raise SystemExit('Service exited.')
 
     def _init_config(self):
-        # pylint: disable=W0611,C0415
         dump_defaults()
 
-        if Path(HARDCODED['CONFIG_HA']).is_file():
-            with open(HARDCODED['CONFIG_HA'], 'r') as cnf:
+        config_ha = f"{HARDCODED['PATH_CONFIG']}/{HARDCODED['FILE_CONFIG_HA']}"
+        config_engine = f"{HARDCODED['PATH_CONFIG']}/{HARDCODED['FILE_CONFIG_ENGINE']}"
+
+        if Path(config_ha).is_file():
+            with open(config_ha, 'r') as cnf:
                 self.CONFIG_HA = yaml_load(cnf.read())
 
-            from hado.core.config.shared import init
-            init()
-            from hado.core.config.shared import CONFIG_HA, CONFIG_ENGINE, CONFIG_LOADED
-            CONFIG_HA = self.CONFIG_HA
-            CONFIG_ENGINE = self.CONFIG_ENGINE
-            CONFIG_LOADED = self.CONFIG_LOADED
+            config.init()
+            config.CONFIG_HA = self.CONFIG_HA
+            config.CONFIG_ENGINE = self.CONFIG_ENGINE
 
-            if Path(HARDCODED['CONFIG_ENGINE']).is_file():
-                with open(HARDCODED['CONFIG_HA'], 'r') as cnf:
+            if Path(config_engine).is_file():
+                with open(config_engine, 'r') as cnf:
                     self.CONFIG_ENGINE.update(yaml_load(cnf.read()))
 
             else:
-                log(f"No custom engine config loaded (file: '{HARDCODED['CONFIG_ENGINE']}')", lv=3)
+                log(f"No custom engine config loaded (file: '{config_engine}')", lv=3)
 
         else:
-            log(f"Unable to load config from file: '{HARDCODED['CONFIG_HA']}'")
+            log(f"Unable to load config from file: '{config_ha}'")
             self.stop()
 
     def _thread(self, i: int, d: dict, desc: str):
@@ -112,25 +121,27 @@ class Service:
             time_sleep(1)
 
     def _status(self):
-        thread_list = self.THREADER.list()
-        simple_thread_list = [thread.name for thread in thread_list]
-        log(f"Status - threads running: {simple_thread_list}", lv=3)
-        if HARDCODED['DEBUG']:
-            detailed_thread_list = '\n'.join([str(thread.__dict__) for thread in thread_list])
+        log(
+            f"Status - threads running: "
+            f"{[thread.description for thread in self.THREADER.list()]}",
+            lv=3
+        )
+        if self.CONFIG_ENGINE['DEBUG']:
+            detailed_thread_list = '\n'.join([str(thread.__dict__) for thread in self.THREADER.list()])
             log(f"Detailed info on running threads:\n{detailed_thread_list}", lv=4)
 
     def _run(self):
         # pylint: disable=W0702
         try:
-            log('Entering service runtime')
+            log('Entering service runtime', lv=3)
             run_last_status_time = time()
 
             while True:
-                if time() > (run_last_status_time + HARDCODED['SVC_INTERVAL_STATUS']):
+                if time() > (run_last_status_time + self.CONFIG_ENGINE['SVC_INTERVAL_STATUS']):
                     self._status()
                     run_last_status_time = time()
 
-                time_sleep(HARDCODED['SVC_INTERVAL_LOOP'])
+                time_sleep(self.CONFIG_ENGINE['SVC_INTERVAL_LOOP'])
 
         except:
             try:
@@ -138,7 +149,7 @@ class Service:
 
                 if str(error).find('Service exited') == -1:
                     log(f"A fatal error occurred: \"{exc_type} - {error}\"")
-                    log(f"{format_exc(limit=HARDCODED['TRACEBACK_LINES'])}")
+                    log(f"{format_exc(limit=self.CONFIG_ENGINE['TRACEBACK_LINES'])}")
 
             except IndexError:
                 pass

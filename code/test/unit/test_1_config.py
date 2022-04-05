@@ -57,13 +57,13 @@ class TestConfigLoader:
 
     def test_check_config_engine(self, mocker):
         mock_paths(mocker)
-        from hado.core.config.shared import CONFIG_ENGINE
+        from hado.core.config import shared
         from hado.core.config.load import DeserializeConfig
 
-        assert DeserializeConfig(config_ha={}, config_engine=CONFIG_ENGINE)._check_engine() is True
-        CONFIG_ENGINE['DEBUG'] = 'nope'
-        assert DeserializeConfig(config_ha={}, config_engine=CONFIG_ENGINE)._check_engine() is False
-        CONFIG_ENGINE['DEBUG'] = False
+        assert DeserializeConfig(config_ha={}, config_engine=shared.CONFIG_ENGINE)._check_engine() is True
+        shared.CONFIG_ENGINE['DEBUG'] = 'nope'
+        assert DeserializeConfig(config_ha={}, config_engine=shared.CONFIG_ENGINE)._check_engine() is False
+        shared.CONFIG_ENGINE['DEBUG'] = False
 
     def test_check_config_ha(self, capsys, mocker):
         mock_paths(mocker)
@@ -81,7 +81,7 @@ class TestConfigLoader:
     def test_check_config_resource(self, capsys, mocker):
         mock_paths(mocker)
         from yaml import safe_load as yaml_load
-        from hado.core.config.shared import CONFIG_ENGINE
+        from hado.core.config import shared
         from hado.core.config.load import DeserializeConfig
 
         with open('../test/data/config_ha_2.yml', 'r') as c:
@@ -93,14 +93,14 @@ class TestConfigLoader:
             r = e['apps']['test']['resources'][n]
             assert DeserializeConfig(
                 config_ha=e,
-                config_engine=CONFIG_ENGINE
+                config_engine=shared.CONFIG_ENGINE
             )._check_resource(name=n, res=r) is e['_TEST']
             yaml_test_validation(c=capsys, e=e)
 
     def test_check_config_monitoring(self, capsys, mocker):
         mock_paths(mocker)
         from yaml import safe_load as yaml_load
-        from hado.core.config.shared import CONFIG_ENGINE
+        from hado.core.config import shared
         from hado.core.config.load import DeserializeConfig
 
         with open('../test/data/config_ha_3.yml', 'r') as c:
@@ -111,14 +111,14 @@ class TestConfigLoader:
             n = f'test_ping_{k}'
             m = e['apps']['test']['monitoring'][n]
             assert DeserializeConfig(
-                config_ha=e, config_engine=CONFIG_ENGINE
+                config_ha=e, config_engine=shared.CONFIG_ENGINE
             )._check_monitoring(name=n, mon=m) is e['_TEST']
             yaml_test_validation(c=capsys, e=e)
 
     def test_check_config_peer(self, capsys, mocker):
         mock_paths(mocker)
         from yaml import safe_load as yaml_load
-        from hado.core.config.shared import CONFIG_ENGINE
+        from hado.core.config import shared
         from hado.core.config.load import DeserializeConfig
 
         with open('../test/data/config_ha_4.yml', 'r') as c:
@@ -129,14 +129,14 @@ class TestConfigLoader:
             n = f'test_peer_{k}'
             p = e['apps']['test']['peers'][n]
             assert DeserializeConfig(
-                config_ha=e, config_engine=CONFIG_ENGINE
+                config_ha=e, config_engine=shared.CONFIG_ENGINE
             )._check_peer(name=n, peer=p) is e['_TEST']
             yaml_test_validation(c=capsys, e=e)
 
     def test_check_config_app(self, capsys, mocker):
         mock_paths(mocker)
         from yaml import safe_load as yaml_load
-        from hado.core.config.shared import CONFIG_ENGINE
+        from hado.core.config import shared
         from hado.core.config.load import DeserializeConfig
 
         with open('../test/data/config_ha_5.yml', 'r') as c:
@@ -147,14 +147,14 @@ class TestConfigLoader:
             n = f'test_app_{k}'
             a = e['apps'][n]
             assert DeserializeConfig(
-                config_ha=e, config_engine=CONFIG_ENGINE
+                config_ha=e, config_engine=shared.CONFIG_ENGINE
             )._check_app(name=n, app=a) is e['_TEST']
             yaml_test_validation(c=capsys, e=e)
 
     def test_check_config_loader(self, capsys, mocker):
         mock_paths(mocker)
         from yaml import safe_load as yaml_load
-        from hado.core.config.shared import CONFIG_ENGINE
+        from hado.core.config import shared
         from hado.core.config.load import DeserializeConfig
 
         with open('../test/data/config_ha_6.yml', 'r') as c:
@@ -166,10 +166,11 @@ class TestConfigLoader:
 
             # mocking 'app' so that the test is not reaching too deep
             mocker.patch('hado.core.app.App.__init__', return_value=None)
+            mocker.patch('hado.core.app.App.init_resources', return_value=None)
             mocker.patch('hado.core.plugin.monitoring.SystemMonitoring.__init__', return_value=None)
 
             try:
-                cnf = DeserializeConfig(config_ha=e, config_engine=CONFIG_ENGINE).get()
+                cnf = DeserializeConfig(config_ha=e, config_engine=shared.CONFIG_ENGINE).get()
                 yaml_test_validation(c=capsys, e=e)
 
             except ValueError:

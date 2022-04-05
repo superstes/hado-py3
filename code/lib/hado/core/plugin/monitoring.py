@@ -1,16 +1,16 @@
-from hado.core.config.shared import CONFIG_ENGINE
+from hado.core.config import shared
 from hado.core.plugin.driver import Plugin, PluginType, BasePluginUse
 
 
 class Monitoring(BasePluginUse):
     plugin_type = PluginType.monitoring
-    interval = CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']
+    interval = shared.CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']
 
     def __init__(self, name: str, config: dict):
         if 'vital' in config:
             v = config['vital']
         else:
-            v = CONFIG_ENGINE['DEFAULT_MONITORING_VITAL']
+            v = shared.CONFIG_ENGINE['DEFAULT_MONITORING_VITAL']
 
         super().__init__(
             vital=v,
@@ -23,7 +23,8 @@ class Monitoring(BasePluginUse):
         self.name = name
         self._set_attr(data=config, attr='interval')
 
-    def check(self) -> bool:
+    @property
+    def status(self) -> bool:
         return self.plugin.check()
 
     def __repr__(self):
@@ -32,7 +33,7 @@ class Monitoring(BasePluginUse):
 
 class SystemMonitoring(BasePluginUse):
     plugin_type = PluginType.monitoring
-    interval = CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']
+    interval = shared.CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']
 
     def __init__(self, name: str, config: dict):
         super().__init__(
@@ -46,7 +47,8 @@ class SystemMonitoring(BasePluginUse):
         self.name = name
         self._set_attr(data=config, attr='interval')
 
-    def check(self) -> bool:
+    @property
+    def status(self) -> bool:
         return self.plugin.check()
 
     def __repr__(self):

@@ -54,8 +54,8 @@ class TestPlugins:
         )._get_cmds() == self.ACTIONS['m']
 
     def test_plugin_cmd_support(self, mocker, capsys):
-        from hado.core.config.shared import CONFIG_ENGINE
-        CONFIG_ENGINE['DEBUG'] = True
+        from hado.core.config import shared
+        shared.CONFIG_ENGINE['DEBUG'] = True
         mock_paths(mocker)
 
         pr = Plugin(
@@ -87,7 +87,7 @@ class TestPlugins:
         pm._check_cmd_support(t='unsupported', s=3)
         stdout, _ = capsys.readouterr()
         assert capsys_debug(stdout)
-        CONFIG_ENGINE['DEBUG'] = False
+        shared.CONFIG_ENGINE['DEBUG'] = False
 
     def test_plugin_cmd_build_base(self, mocker, capsys):
         # NOTE: not testing unsupported commands as they get filtered before
@@ -120,8 +120,8 @@ class TestPlugins:
 
     def test_plugin_cmd_build(self, mocker, capsys):
         h = mock_paths(mocker)
-        from hado.core.config.shared import CONFIG_ENGINE
-        CONFIG_ENGINE['DEBUG'] = True
+        from hado.core.config import shared
+        shared.CONFIG_ENGINE['DEBUG'] = True
 
         start_cmd = ['bash', h['PATH_PLUGIN'] + '/resource/3a/generic.sh', 'start']
         arg = 'test'
@@ -135,7 +135,7 @@ class TestPlugins:
         assert p._get_cmd(t='start') == (start_cmd + [arg])
         stdout, _ = capsys.readouterr()
         assert capsys_debug(stdout)
-        CONFIG_ENGINE['DEBUG'] = False
+        shared.CONFIG_ENGINE['DEBUG'] = False
 
         # too few arguments supplied
         with pytest.raises(ValueError):
@@ -268,7 +268,7 @@ class TestPlugins:
     def test_plugin_monitoring(self, mocker):
         mock_paths(mocker)
         mocker.patch('hado.core.plugin.monitoring.Plugin', PseudoPlugin)
-        from hado.core.config.shared import CONFIG_ENGINE
+        from hado.core.config import shared
 
         m = Monitoring(
             name='testMon1',
@@ -301,13 +301,13 @@ class TestPlugins:
                 'plugin': 'testMon3Plug',
             }
         )
-        assert m.vital is CONFIG_ENGINE['DEFAULT_MONITORING_VITAL']
+        assert m.vital is shared.CONFIG_ENGINE['DEFAULT_MONITORING_VITAL']
         del m
 
     def test_plugin_resource(self, mocker):
         mock_paths(mocker)
         mocker.patch('hado.core.plugin.resource.Plugin', PseudoPlugin)
-        from hado.core.config.shared import CONFIG_ENGINE
+        from hado.core.config import shared
 
         r = Resource(
             name='testRes1',
@@ -349,7 +349,7 @@ class TestPlugins:
             },
             sequence=3
         )
-        assert r.vital is CONFIG_ENGINE['DEFAULT_RESOURCE_VITAL']
+        assert r.vital is shared.CONFIG_ENGINE['DEFAULT_RESOURCE_VITAL']
         assert r.mode == Resource.mode
         assert r.mode_prio == Resource.mode_prio
         assert r.on_failure == Resource.on_failure
