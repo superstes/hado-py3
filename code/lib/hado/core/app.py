@@ -15,6 +15,7 @@ class App:
         self.log_id = f"App - {self.name} -"
         self.resources = []
         self.monitoring = []
+        self.peers = []
         self._set_attr(data=app, attr='on_failure')
         self._set_attr(data=app, attr='on_shutdown')
 
@@ -161,7 +162,7 @@ class App:
             'health': self.health,
             'health_res': self.resource_health,
             'health_mon': self.monitoring_health,
-            'resources': {r.name: r.status for r in self.resources},
+            'resources': {r.name: r.stats_raw for r in self.resources},
             'monitoring': {m.name: m.status for m in self.monitoring},
         }
 

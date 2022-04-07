@@ -1,9 +1,9 @@
 from waitress import serve
-from flask import Flask, abort
+from flask import Flask
 
 from hado.core.config import shared
 from hado.util.debug import log
-from hado.api.util import client_ip, deny_public, HTTP_STATI
+from hado.api.util import client_ip, deny_public, json_error
 from hado.api.get import api_get
 from hado.api.post import api_post
 
@@ -32,4 +32,4 @@ def start():
 def catch_all(p):
     deny_public()
     log(f"Got access to unknown path: '{p}' from client '{client_ip()}'.", lv=4)
-    abort(HTTP_STATI['NOT_FOUND'])
+    return json_error('NOT_FOUND')

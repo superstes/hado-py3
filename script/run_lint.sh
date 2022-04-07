@@ -23,9 +23,10 @@ PYTHONPATH="${py39venv}:${py39venvGH}" pylint hado/**/*.py --max-line-length=120
 #   C0114-C0116 => inline documentation might be added later on
 #   C0415 => importing in functions for testing
 #   R0201 => methods used for pytest grouping
+#   R0801 => some snippets are re-used in different test-cases
 #   R0903 => classes used for pytest grouping
 #   W0212 => accessing protected methods for testing
 #   W0511 => todo's are OK
 
 echo "### Linting unit tests ###"
-PYTHONPATH="${py39venv}:${py39venvGH}" pylint ../test/**/*.py --max-line-length=120 --disable=C0103,C0114,C0115,C0116,C0415,R0201,R0903,W0212,W0511
+PYTHONPATH="${py39venv}:${py39venvGH}" pylint ../test/**/*.py --max-line-length=120 --disable=C0103,C0114,C0115,C0116,C0415,R0201,R0801,R0903,W0212,W0511

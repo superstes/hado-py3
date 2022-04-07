@@ -23,7 +23,7 @@
 #   (export PYTHONPATH=/var/lib/hado)
 #   it's being set automatically by the systemd service
 
-# pylint: disable=C0415
+# pylint: disable=C0415,W0702,W0703
 
 import signal
 from traceback import format_exc
@@ -36,7 +36,8 @@ from yaml import safe_load as yaml_load
 from hado.util.debug import log
 from hado.core.config.defaults import HARDCODED, ENGINE
 from hado.core.config.dump import dump_defaults
-from hado.core.config import shared as config
+from hado.core.config import shared
+from hado.util.threader import Loop as Thread
 
 
 class Service:
@@ -46,27 +47,24 @@ class Service:
         signal.signal(signal.SIGINT, self.stop)
         self.CONFIG_HA = {}
         self.CONFIG_ENGINE = ENGINE
-        self._init_config()
-        # import only possible after config-initialization
-        from hado.core.config.load import DeserializeConfig
-        from hado.util.threader import Loop as Thread
-        config.CONFIG_LOADED = DeserializeConfig(
-            config_ha=self.CONFIG_HA,
-            config_engine=self.CONFIG_ENGINE,
-        ).get()
         self.THREADER = Thread()
 
     def start(self):
         try:
-            from hado.api import server  # import only possible after config-initialization
+            # import only possible after config-initialization
+            from hado.api import server
+            from hado.core.switch.fetch import add_workers
+
             self._thread(i=1, desc='HA-DO Rest-Server', d={'run': server, 'method': 'start'})
+            add_workers(threader=self.THREADER)
 
             self.THREADER.start()
             log('Start - finished starting threads.', lv=3)
             self._status()
 
-        except TypeError as error_msg:
-            log(f"Service encountered an error while starting:\n\"{error_msg}\"")
+        except Exception as e:
+            log(f"Service encountered an error while starting: \"{e}\"")
+            log(format_exc(limit=shared.CONFIG_ENGINE['TRACEBACK_LINES']))
             self.stop()
 
         self._run()
@@ -78,7 +76,7 @@ class Service:
 
         raise SystemExit('Service exited.')
 
-    def _init_config(self):
+    def init_config(self) -> bool:
         dump_defaults()
 
         config_ha = f"{HARDCODED['PATH_CONFIG']}/{HARDCODED['FILE_CONFIG_HA']}"
@@ -88,20 +86,34 @@ class Service:
             with open(config_ha, 'r') as cnf:
                 self.CONFIG_HA = yaml_load(cnf.read())
 
-            config.init()
-            config.CONFIG_HA = self.CONFIG_HA
-            config.CONFIG_ENGINE = self.CONFIG_ENGINE
+            shared.init()
+            shared.CONFIG_HA = self.CONFIG_HA
+            shared.CONFIG_ENGINE = self.CONFIG_ENGINE
 
+            engine_ok = False
             if Path(config_engine).is_file():
-                with open(config_engine, 'r') as cnf:
-                    self.CONFIG_ENGINE.update(yaml_load(cnf.read()))
+                try:
+                    with open(config_engine, 'r') as cnf:
+                        self.CONFIG_ENGINE.update(yaml_load(cnf.read()))
+                        engine_ok = True
 
-            else:
+                except TypeError:
+                    pass
+
+            if not engine_ok:
                 log(f"No custom engine config loaded (file: '{config_engine}')", lv=3)
 
         else:
             log(f"Unable to load config from file: '{config_ha}'")
             self.stop()
+            return False
+
+        from hado.core.config.load import DeserializeConfig
+        shared.CONFIG_LOADED = DeserializeConfig(
+            config_ha=self.CONFIG_HA,
+            config_engine=self.CONFIG_ENGINE,
+        ).get()
+        return True
 
     def _thread(self, i: int, d: dict, desc: str):
         # pylint: disable=W0612
@@ -112,13 +124,6 @@ class Service:
         )
         def thread_task(data: dict):
             getattr(data['run'], data['method'])()
-
-    @staticmethod
-    def _wait(seconds: int):
-        start_time = time()
-
-        while time() < start_time + seconds:
-            time_sleep(1)
 
     def _status(self):
         log(
@@ -131,7 +136,6 @@ class Service:
             log(f"Detailed info on running threads:\n{detailed_thread_list}", lv=4)
 
     def _run(self):
-        # pylint: disable=W0702
         try:
             log('Entering service runtime', lv=3)
             run_last_status_time = time()
@@ -149,7 +153,7 @@ class Service:
 
                 if str(error).find('Service exited') == -1:
                     log(f"A fatal error occurred: \"{exc_type} - {error}\"")
-                    log(f"{format_exc(limit=self.CONFIG_ENGINE['TRACEBACK_LINES'])}")
+                    log(format_exc(limit=self.CONFIG_ENGINE['TRACEBACK_LINES']))
 
             except IndexError:
                 pass
@@ -157,4 +161,8 @@ class Service:
             self.stop()
 
 
-Service().start()
+if __name__ == '__main__':
+    # init-process split for testing
+    svc = Service()
+    svc.init_config()
+    svc.start()

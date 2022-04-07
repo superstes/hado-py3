@@ -40,6 +40,9 @@ class System:
         return {
             'status': self.status,
             'health': self.health,
-            'health_system': self.system_health,
-            'status_system': self.system_status,
+            'system': {
+                'health': self.system_health,
+                'status': self.system_status,
+                'monitoring': {m.name: m.status for m in self.monitoring},
+            }
         }

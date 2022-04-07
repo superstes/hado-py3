@@ -1,4 +1,5 @@
 flask
 PyYAML
-requests
 waitress
+Flask-HTTPAuth
+requests

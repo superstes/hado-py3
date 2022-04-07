@@ -45,13 +45,13 @@ class TestPlugins:
             plugin_type=PluginType.resource,
             name='3a',
             args=[],
-        )._get_cmds() == self.ACTIONS['r']
+        )._get_available_cmds() == self.ACTIONS['r']
 
         assert Plugin(
             plugin_type=PluginType.monitoring,
             name='3a',
             args=[],
-        )._get_cmds() == self.ACTIONS['m']
+        )._get_available_cmds() == self.ACTIONS['m']
 
     def test_plugin_cmd_support(self, mocker, capsys):
         from hado.core.config import shared
@@ -69,11 +69,11 @@ class TestPlugins:
             args=[],
         )
 
-        assert pr._get_cmds() == self.ACTIONS['r']
+        assert pr._get_available_cmds() == self.ACTIONS['r']
         for c in self.ACTIONS['r']:
             assert pr._check_cmd_support(c)
 
-        assert pm._get_cmds() == self.ACTIONS['m']
+        assert pm._get_available_cmds() == self.ACTIONS['m']
         for c in self.ACTIONS['m']:
             assert pm._check_cmd_support(c)
 

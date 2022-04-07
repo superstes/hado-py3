@@ -55,7 +55,8 @@ class Plugin:
             self.ARGS = args.split(' ')
 
         self._load_config()
-        self.CMDS = self._get_cmds()
+        self.CMDS = self._get_available_cmds()
+        self._cached_cmds = {}
 
     def _load_config(self):
         if not Path(self.BASE).is_dir():
@@ -72,7 +73,7 @@ class Plugin:
                 f"ERROR: {self.log_id} Unable to load config from file: '{self.CONFIG_FILE}'"
             )
 
-    def _get_cmds(self) -> list:
+    def _get_available_cmds(self) -> list:
         cl = []
         for cmd in plugin_cmds[self.TYPE]:
             if cmd in self.CONFIG:
@@ -81,19 +82,22 @@ class Plugin:
         return cl
 
     def _check_cmd_support(self, t: str, s: int = 2) -> bool:
-        if t in self.CMDS:
-            return True
+        if t not in self._cached_cmds:  # already checked
+            if t in self.CMDS:
+                return True
 
-        elif s == 1:
-            raise ValueError(f"ERROR: {self.log_id} Command type '{t}' not supported!")
+            elif s == 1:
+                raise ValueError(f"ERROR: {self.log_id} Command type '{t}' not supported!")
 
-        elif s == 2:
-            log(f"{self.log_id} Command type '{t}' not supported!", lv=2)
+            elif s == 2:
+                log(f"{self.log_id} Command type '{t}' not supported!", lv=2)
 
-        elif s == 3:
-            log(f"{self.log_id} Command type '{t}' not supported!", lv=4)
+            elif s == 3:
+                log(f"{self.log_id} Command type '{t}' not supported!", lv=4)
 
-        return False
+            return False
+
+        return True
 
     def _check_build_cmd(self, t: str) -> list:
         cnf_exec = self.CONFIG[t]['exec']
@@ -135,8 +139,11 @@ class Plugin:
         return cmd
 
     def _get_cmd(self, t: str) -> list:
-        cmd = self._check_build_cmd(t=t)
-        cmd.extend(self.ARGS)
+        # using a cmd-cache as it won't change at runtime
+        if t not in self._cached_cmds:
+            _cmd = self._check_build_cmd(t=t)
+            _cmd.extend(self.ARGS)
+            self._cached_cmds[t] = _cmd
 
         if 'args' in self.CONFIG[t]:
             cnf_arg_nr = self.CONFIG[t]['args']
@@ -150,69 +157,62 @@ class Plugin:
                 f"configured {cnf_arg_nr} / got {len(self.ARGS)}!"
             )
 
-        log(f"{self.log_id} Executing action '{t}': '{' '.join(cmd)}'", lv=4)
-        return cmd
+        log(f"{self.log_id} Executing action '{t}': '{' '.join(self._cached_cmds[t])}'", lv=4)
+        return self._cached_cmds[t]
 
-    # pylint: disable=R0913
-    def _exec(self, t: str,
-              cno: bool = False, co: bool = False,
-              ca: bool = False, cna: bool = False,
-              cnl: bool = False, cl: bool = False,
-              ) -> str:
+    def _exec_check(self, t: str, check: dict) -> bool:
         run = True
+        if 'other' in check and 'other' in self.CMDS:
+            c = check['other']
+            s = self.is_other
+            msg = {True: 'other node inactive', False: 'other node is active'}
 
-        if (co or cno) and 'other' in self.CMDS:
-            other = self.is_other
-            if cno and other:
-                log(f"{self.log_id} other node is active - not executing '{t}'!", lv=2)
+            if s is not c:
+                log(f"{self.log_id} {msg[c]} - not executing '{t}'!", lv=2)
                 run = False
 
-            if co and not other:
-                log(f"{self.log_id} other node inactive - not executing '{t}'!", lv=2)
+        if 'active' in check and 'active' in self.CMDS:
+            c = check['active']
+            s = self.is_active
+            msg = {True: 'is inactive', False: 'is active'}
+
+            if s is not c:
+                log(f"{self.log_id} {msg[c]} - not executing '{t}'!", lv=2)
                 run = False
 
-        if (ca or cna) and 'active' in self.CMDS:
-            active = self.is_active
-            if ca and not active:
-                log(f"{self.log_id} is inactive - not executing '{t}'!", lv=2)
+        if 'leader' in check and 'leader' in self.CMDS:
+            c = check['leader']
+            s = self.is_leader
+            msg = {True: 'is not leader', False: 'is leader'}
+
+            if s is not c:
+                log(f"{self.log_id} {msg[c]} - not executing '{t}'!", lv=2)
                 run = False
 
-            if cna and active:
-                log(f"{self.log_id} is active - not executing '{t}'!", lv=2)
-                run = False
+        return run
 
-        if (cl or cnl) and 'leader' in self.CMDS:
-            leader = self.is_leader
-            if cl and not leader:
-                log(f"{self.log_id} is not leader - not executing '{t}'!", lv=2)
-                run = False
+    def _exec(self, t: str, check: dict = None) -> str:
+        if check is None:
+            check = {}
 
-            if cnl and leader:
-                log(f"{self.log_id} is leader - not executing '{t}'!", lv=2)
-                run = False
-
-        if run:
+        if self._exec_check(t=t, check=check):
             shell = False
             if 'shell' in self.CONFIG[t]:
                 shell = self.CONFIG[t]['shell']
 
             error_expected = False
+            timeout = shared.CONFIG_ENGINE['PROCESS_TIMEOUT_MONITORING']
             if t in plugin_cmd_timeouts['PROCESS_TIMEOUT_MONITORING']:
                 error_expected = True
 
-            for k, v in plugin_cmd_timeouts.items():
-                if t in v:
-                    result = subprocess(
-                        cmd=self._get_cmd(t=t),
-                        timeout=shared.CONFIG_ENGINE[k],
-                        shell=shell,
-                        error_expected=error_expected,
-                    )
+            else:
+                timeout = shared.CONFIG_ENGINE['PROCESS_TIMEOUT_ACTION']
 
             result = subprocess(
                 cmd=self._get_cmd(t=t),
                 shell=shell,
                 error_expected=error_expected,
+                timeout=timeout,
             )
 
         else:
@@ -226,7 +226,7 @@ class Plugin:
         t = 'start'
         if self._check_cmd_support(t=t, s=1):
             log(f"{self.log_id} Starting!", lv=3)
-            self._exec(t=t, cno=True, cna=True)
+            self._exec(t=t, check={'other': False, 'active': False})
             return True
 
         return False
@@ -237,7 +237,7 @@ class Plugin:
         if self._check_cmd_support(t=t, s=1):
             log(f"{self.log_id} Stopping!", lv=2)
             self.demote()
-            self._exec(t=t, ca=True)
+            self._exec(t=t, check={'active': True})
             return True
 
         return False
@@ -251,12 +251,17 @@ class Plugin:
 
         return all([stop, start])
 
-    def promote(self) -> bool:
+    def promote(self, multi: bool = False) -> bool:
         # promote resource to cluster leader
         t = 'promote'
+        c = {'leader': False}
+
+        if not multi:
+            c['other'] = False
+
         if self._check_cmd_support(t=t, s=2):
             log(f"{self.log_id} Promoting to leader!", lv=3)
-            self._exec(t=t, cnl=True, cno=True)
+            self._exec(t=t, check=c)
             return True
 
         return False
@@ -266,7 +271,7 @@ class Plugin:
         t = 'demote'
         if self._check_cmd_support(t=t, s=3):
             log(f"{self.log_id} Demoting to worker!", lv=3)
-            self._exec(t=t, cl=True)
+            self._exec(t=t, check={'leader': True})
             return True
 
         return False
@@ -286,7 +291,7 @@ class Plugin:
         t = 'fix'
         if self._check_cmd_support(t=t, s=3):
             log(f"{self.log_id} Running fix!", lv=2)
-            self._exec(t, cna=True)
+            self._exec(t, check={'active': False})
             return True
 
         return False
@@ -350,11 +355,8 @@ class BasePluginUse:
     def __init__(self, vital: bool, plugin: Plugin):
         self.vital = vital
         self.plugin = plugin
+        self.status = None
 
     def _set_attr(self, data: dict, attr: str):
         if attr in data:
             setattr(self, attr, data[attr])
-
-    @property
-    def stats(self) -> dict:
-        return {self.name: self.status}

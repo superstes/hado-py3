@@ -20,6 +20,9 @@ class Resource(BasePluginUse):
         )
         self.name = name
         self.sequence = sequence
+        self.up = None
+        self.other_active = None
+        self.cluster_leader = None
         self._set_attr(data=config, attr='on_failure')
         self._set_attr(data=config, attr='on_shutdown')
         self._set_attr(data=config, attr='mode')
@@ -31,9 +34,30 @@ class Resource(BasePluginUse):
 
         return False
 
+    def get_status(self) -> bool:
+        _s = self.plugin.is_active
+        self.status = _s
+        return _s
+
+    def get_up(self) -> bool:
+        _o = self.plugin.is_other
+        _u = any([self.other_active, self.status])
+        self.other_active = _o
+        self.up = _u
+        return _u
+
+    def get_leader(self) -> bool:
+        _l = self.plugin.is_leader
+        self.cluster_leader = _l
+        return self.cluster_leader
+
     @property
-    def status(self) -> bool:
-        return self.plugin.is_active
+    def stats(self) -> dict:
+        return {self.name: self.stats_raw}
+
+    @property
+    def stats_raw(self) -> dict:
+        return {'up': self.up, 'active': self.status}
 
     def __repr__(self):
         return f"HA-DO RESOURCE: {self.__dict__}"

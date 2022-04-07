@@ -10,6 +10,8 @@ from hado.util.process import subprocess
 
 from .util import capsys_error
 
+WAIT = 0.2
+
 
 def thread(threader, d: dict, desc: str):
     # pylint: disable=W0612
@@ -50,7 +52,7 @@ class TestProcessing:
         )
         t.start()
 
-        sleep(0.3)
+        sleep(WAIT)
         del t
         assert Path(test_file).is_file()
         remove(test_file)
@@ -73,7 +75,7 @@ class TestProcessing:
         )
 
         t.start_thread(description=desc)
-        sleep(0.3)
+        sleep(WAIT)
         del t
         assert Path(test_file).is_file()
         remove(test_file)
@@ -88,7 +90,7 @@ class TestProcessing:
                 with open(test_file, 'w+') as f:
                     f.write('test')
 
-                sleep(0.3)
+                sleep(WAIT)
 
             def __del__(self):
                 remove(test_file)
@@ -101,11 +103,11 @@ class TestProcessing:
         )
         t.start()
 
-        sleep(0.3)
+        sleep(WAIT)
         assert Path(test_file).is_file()
         t.stop()
         del t
-        sleep(0.3)
+        sleep(WAIT)
         assert not Path(test_file).is_file()
 
     def test_thread_list(self):
@@ -125,7 +127,7 @@ class TestProcessing:
         t.start()
         tl = t.list()
 
-        sleep(0.3)
+        sleep(WAIT)
         del t
         assert isinstance(tl, set)
         assert len(tl) == 1
@@ -161,12 +163,12 @@ class TestProcessing:
         )
         t.start()
 
-        sleep(0.3)
+        sleep(WAIT)
         assert Path(test_file).is_file()
         remove(test_file)
         assert not Path(test_file).is_file()
         assert t.reload_thread(description=desc)
-        sleep(0.3)
+        sleep(WAIT)
         assert Path(test_file).is_file()
         del t
 

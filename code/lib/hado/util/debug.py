@@ -1,4 +1,5 @@
 from hado.core.config.defaults import HARDCODED
+from hado.core.config.defaults import ENGINE as ENGINE_DEFAULTS
 
 # pylint: disable=C0415
 # startup-fallback (before shared-vars got initialized)
@@ -10,8 +11,7 @@ def get_debug() -> bool:
         return shared.CONFIG_ENGINE['DEBUG']
 
     except AttributeError:
-        from hado.core.config.defaults import ENGINE
-        return ENGINE['DEBUG']
+        return ENGINE_DEFAULTS['DEBUG']
 
 
 def get_log_mode() -> bool:
@@ -20,8 +20,7 @@ def get_log_mode() -> bool:
         return shared.CONFIG_ENGINE['LOG_MODE']
 
     except AttributeError:
-        from hado.core.config.defaults import ENGINE
-        return ENGINE['LOG_MODE']
+        return ENGINE_DEFAULTS['LOG_MODE']
 
 
 def log(msg: str, lv: int = 1):

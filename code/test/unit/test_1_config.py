@@ -1,6 +1,7 @@
 # Test config-related functions
 
-from os import path, rename, getcwd
+from os import rename, getcwd
+from pathlib import Path
 from re import match as regex_match
 import pytest
 
@@ -31,16 +32,17 @@ def yaml_test_validation(c, e: dict):
 class TestConfigLoader:
     def test_dump_defaults(self, mocker):
         h = mock_paths(mocker)
+        mocker.patch('hado.core.config.dump.HARDCODED', h)
         from hado.core.config.dump import dump_defaults
         file = f"{h['PATH_CONFIG']}/{h['FILE_CONFIG_ENGINE_DEFAULTS']}"
 
         dump_defaults()
-        assert path.isfile(file)
+        assert Path(file).is_file()
 
+        # for convenience
         rename(file, f'{file}.test-passed.yml')
 
     @pytest.mark.parametrize('item, data, result', [
-        ('TRACEBACK_LINES', None, 'unconfigured'),  # no_data
         ('DEBUG', 'ok', False),  # wrong_type
         ('DEBUG', False, True),  # bool_ok
         ('PROCESS_TIMEOUT_MONITORING', '3', True),  # int_as_string
@@ -50,6 +52,13 @@ class TestConfigLoader:
         ('PROCESS_TIMEOUT_MONITORING', 10, True),  # int_ok
         ('DEFAULT_RESOURCE_MODE', 'nope', False),  # list_nok
         ('DEFAULT_RESOURCE_MODE', 'as', True),  # list_ok
+        ('API_VIEW_PWD', 'aaaa©aaaa', False),  # invalid chars in pwd
+        ('API_VIEW_PWD', 'aaa', False),  # password too short
+        ('API_VIEW_USER', '', False),  # user too short
+        ('API_VIEW_USER', 'a' * 21, False),  # user too long
+        ('API_LISTEN_IP', 'a', False),  # invalid ip
+        ('API_LISTEN_IP', '192.168.0.1', True),  # valid ipv4
+        ('API_LISTEN_IP', 'fd00:dc63:8397:10bb::1', True),  # valid ipv6
     ])
     def test_validator(self, item, data, result):
         from hado.core.config.validate import validate
@@ -68,6 +77,7 @@ class TestConfigLoader:
     def test_check_config_ha(self, capsys, mocker):
         mock_paths(mocker)
         from yaml import safe_load as yaml_load
+        from hado.core.config import shared
         from hado.core.config.load import DeserializeConfig
 
         with open('../test/data/config_ha_1.yml', 'r') as c:
@@ -75,7 +85,10 @@ class TestConfigLoader:
 
         for e in examples.values():
             capsys.readouterr()
-            assert DeserializeConfig(config_ha=e, config_engine={})._check_ha() is e['_TEST']
+            assert DeserializeConfig(
+                config_ha=e,
+                config_engine=shared.CONFIG_ENGINE,
+            )._check_ha() is e['_TEST']
             yaml_test_validation(c=capsys, e=e)
 
     def test_check_config_resource(self, capsys, mocker):
@@ -127,7 +140,7 @@ class TestConfigLoader:
         for k, e in examples.items():
             capsys.readouterr()
             n = f'test_peer_{k}'
-            p = e['apps']['test']['peers'][n]
+            p = e[n]
             assert DeserializeConfig(
                 config_ha=e, config_engine=shared.CONFIG_ENGINE
             )._check_peer(name=n, peer=p) is e['_TEST']
@@ -164,8 +177,6 @@ class TestConfigLoader:
             cnf = {}
             capsys.readouterr()
 
-            # mocking 'app' so that the test is not reaching too deep
-            mocker.patch('hado.core.app.App.__init__', return_value=None)
             mocker.patch('hado.core.app.App.init_resources', return_value=None)
             mocker.patch('hado.core.plugin.monitoring.SystemMonitoring.__init__', return_value=None)
 

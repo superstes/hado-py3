@@ -9,6 +9,7 @@ from hado.core.system import System
 from hado.util.helper import value_exists
 from hado.core.plugin.util import existing_plugins, max_plugin_args, enough_args, supported_mode
 from hado.core.config.util import valid_host
+from hado.core.peer import Peer
 
 
 class DeserializeConfig:
@@ -32,15 +33,13 @@ class DeserializeConfig:
             log('Got invalid HA config - exiting!')
             raise ValueError
 
-        # peers
-        glob_peers = self.CONFIG_HA['peers'] if 'peers' in self.CONFIG_HA else {}
-        # todo: create peer-objects from config
+        self._get_apps()
+        self._get_peers()
+        self._get_system()
+        return self.LOADED
 
-        # apps
+    def _get_apps(self):
         for name, app in self.CONFIG_HA['apps'].items():
-            # use global peers if no app-specific ones are defined
-            app['peers'] = glob_peers | app['peers'] if 'peers' in app else {}
-
             if self._check_app(name=name, app=app):
                 _a = App(name=name, app=app)
                 _a.init_resources()
@@ -50,9 +49,48 @@ class DeserializeConfig:
             log('No app could be loaded - exiting!')
             raise ValueError
 
-        # system
-        if value_exists(data=self.CONFIG_HA, key='system') and \
-                value_exists(data=self.CONFIG_HA['system'], key='monitoring'):
+    def _get_peers(self):
+        # init peer objects and link them to apps
+        _processed = []
+        gp = []
+
+        def add(_n: str, _p: dict) -> Peer:
+            po = Peer(
+                name=_n,
+                host=_p['host'],
+                port=_p['port'] if 'port' in _p else self.CONFIG_ENGINE['DEFAULT_PEER_API_PORT'],
+                auth=_p['auth'] if 'auth' in _p else self.CONFIG_ENGINE['DEFAULT_PEER_AUTH'],
+                user=_p['user'] if 'user' in _p else self.CONFIG_ENGINE['DEFAULT_PEER_SYNC_USER'],
+                pwd=_p['pwd'] if 'pwd' in _p else self.CONFIG_ENGINE['DEFAULT_PEER_SYNC_PWD'],
+            )
+            self.LOADED['peers'].append(po)
+            return po
+
+        if value_exists(data=self.CONFIG_HA, key='peers', vt=dict):
+            for n, p in self.CONFIG_HA['peers'].items():
+                gp.append(add(_n=n, _p=p))
+                _processed.append(n)
+
+        for name, app in self.CONFIG_HA['apps'].items():
+            ao = None
+            for ao in self.LOADED['apps']:
+                if ao.name == name:
+                    ao.peers = gp
+                    break
+
+            if ao is None:
+                log(f"App '{name}' was not initialized!")
+                continue
+
+            if value_exists(data=app, key='peers', vt=dict):
+                for n, p in app['peers'].items():
+                    if n not in _processed:
+                        _processed.append(n)
+                        ao.peers.append(add(_n=n, _p=p))
+
+    def _get_system(self):
+        if value_exists(data=self.CONFIG_HA, key='system', vt=dict) and \
+                value_exists(data=self.CONFIG_HA['system'], key='monitoring', vt=dict):
             sys_mon_ok = True
             sys_mon = []
             for name, mon in self.CONFIG_HA['system']['monitoring'].items():
@@ -68,8 +106,6 @@ class DeserializeConfig:
 
             self.LOADED['system'].monitoring = sys_mon
 
-        return self.LOADED
-
     def _check_engine(self) -> bool:
         ok = True
 
@@ -81,21 +117,33 @@ class DeserializeConfig:
         return ok
 
     def _check_ha(self) -> bool:
-        if not value_exists(data=self.CONFIG_HA, key='apps'):
-            log("No 'apps' config found - exiting!")
+        if not value_exists(data=self.CONFIG_HA, key='apps', vt=dict):
+            log("No valid 'apps' config found - exiting!")
             return False
 
-        if not value_exists(data=self.CONFIG_HA, key='system'):
+        if not value_exists(data=self.CONFIG_HA, key='system', vt=dict):
             log(
-                "No 'system' config found - using defaults and skipping system health monitoring!",
+                "No valid 'system' config found - using defaults and skipping system health monitoring!",
                 lv=2
             )
 
-        elif not value_exists(data=self.CONFIG_HA['system'], key='monitoring'):
+        elif not value_exists(data=self.CONFIG_HA['system'], key='monitoring', vt=dict):
             log(
-                "No 'system.monitoring' config found - skipping system health monitoring!",
+                "No valid 'system.monitoring' config found - skipping system health monitoring!",
                 lv=2
             )
+
+        if not value_exists(data=self.CONFIG_HA, key='peers', vt=dict):
+            log(
+                "No valid global 'peers' config found!",
+                lv=2
+            )
+
+        else:
+            for n, p in self.CONFIG_HA['peers'].items():
+                if not self._check_peer(name=n, peer=p):
+                    log(f"Global peer '{n}' has an invalid config!")
+                    return False
 
         return True
 
@@ -103,18 +151,18 @@ class DeserializeConfig:
         # pylint: disable=R0912
         log(f"Checking config for app '{name}'.", lv=3)
 
-        if not value_exists(data=app, key='peers'):
-            log(f"App '{name}' has no peers configured!", lv=2)
-            if not value_exists(data=self.CONFIG_HA, key='peers'):
+        if not value_exists(data=app, key='peers', vt=dict):
+            log(f"App '{name}' has no valid peers configured!", lv=2)
+            if not value_exists(data=self.CONFIG_HA, key='peers', vt=dict):
                 log(f"App '{name}' neither app-specific nor global peers are configured!")
                 return False
 
-        if not value_exists(data=app, key='resources'):
-            log(f"App '{name}' has no resources configured!")
+        if not value_exists(data=app, key='resources', vt=dict):
+            log(f"App '{name}' has no valid resources configured!")
             return False
 
-        if not value_exists(data=app, key='monitoring'):
-            log(f"App '{name}' has no app-specific monitoring configured.", lv=3)
+        if not value_exists(data=app, key='monitoring', vt=dict):
+            log(f"App '{name}' has no valid app-specific monitoring configured.", lv=3)
 
         resources_ok = True
         monitoring_ok = True
@@ -124,11 +172,12 @@ class DeserializeConfig:
             if not self._check_resource(name=n, res=r):
                 resources_ok = False
 
-        for n, p in app['peers'].items():
-            if not self._check_peer(name=n, peer=p):
-                peers_ok = False
+        if value_exists(data=app, key='peers', vt=dict):
+            for n, p in app['peers'].items():
+                if not self._check_peer(name=n, peer=p):
+                    peers_ok = False
 
-        if value_exists(data=app, key='monitoring'):
+        if value_exists(data=app, key='monitoring', vt=dict):
             for n, m in app['monitoring'].items():
                 if not self._check_monitoring(name=n, mon=m):
                     monitoring_ok = False
@@ -272,7 +321,7 @@ class DeserializeConfig:
         if not value_exists(data=mon, key='interval'):
             log(
                 f"Monitoring '{name}' has no interval configured - "
-                f"using default: '{self.CONFIG_ENGINE['DEFAULT_MONITORING_INTERVAL']}'!",
+                f"using default: '{self.CONFIG_ENGINE['DEFAULT_MONITORING_WAIT']}'!",
                 lv=3
             )
 

@@ -28,6 +28,11 @@ a:  # minimal OK
         plugin_args: 'placeholder'
         interval: 2
 
+  peers:
+    test:
+      host: '127.0.1.1'
+      port: 6185
+
   _TEST: true
   _TEST_STDOUT: 'INFO'  # always
   _TEST_NSTDOUT: 'ERROR|WARNING'
@@ -53,7 +58,15 @@ b:  # invalid resource config
 
   system:
     monitoring:
-      test:
+      test_ping:
+        plugin: '1c'
+        plugin_args: 'placeholder'
+        interval: 2
+
+  peers:
+    test:
+      host: '127.0.1.1'
+      port: 6185
 
   _TEST: false
   _TEST_STDOUT: 'ERROR'
@@ -80,13 +93,21 @@ c:  # invalid monitoring config
 
   system:
     monitoring:
-      test:
+      test_ping:
+        plugin: '1c'
+        plugin_args: 'placeholder'
+        interval: 2
+
+  peers:
+    test:
+      host: '127.0.1.1'
+      port: 6185
 
   _TEST: false
   _TEST_STDOUT: 'ERROR'
   _TEST_NSTDOUT: 'WARNING'
 
-d:  # invalid peer config
+d:  # invalid peer config and no global ones defined
   apps:
     test_app_d:
       resources:
@@ -107,11 +128,13 @@ d:  # invalid peer config
 
   system:
     monitoring:
-      test:
+      test_ping:
+        plugin: '1c'
+        plugin_args: 'placeholder'
+        interval: 2
 
   _TEST: false
   _TEST_STDOUT: 'ERROR'
-  _TEST_NSTDOUT: 'WARNING'
 
 e:  # no system config
   apps:
@@ -132,6 +155,72 @@ e:  # no system config
           host: '127.0.1.2'
           port: 6666
 
+  peers:
+    test:
+      host: '127.0.1.1'
+      port: 6185
+
   _TEST: true
   _TEST_STDOUT: 'WARNING'
   _TEST_NSTDOUT: 'ERROR'
+
+f:  # no global peer config
+  apps:
+    test_app_f:
+      resources:
+        test_ip:
+          plugin: '1c'
+          plugin_args: 'p1 p2'
+          vital: true
+          mode: 'as'
+      monitoring:
+        test_ping:
+          plugin: '1c'
+          plugin_args: 'placeholder'
+          interval: 2
+      peers:
+        test_peer:
+          host: '127.0.1.2'
+          port: 6666
+
+  system:
+    monitoring:
+      test_ping:
+        plugin: '1c'
+        plugin_args: 'placeholder'
+        interval: 2
+
+  _TEST: true
+  _TEST_STDOUT: 'WARNING'
+  _TEST_NSTDOUT: 'ERROR'
+
+g:  # invalid system monitoring
+  apps:
+    test_app_g:
+      resources:
+        test_ip:
+          plugin: '1c'
+          plugin_args: 'p1 p2'
+          vital: true
+          mode: 'as'
+      monitoring:
+        test_ping:
+          plugin: '1c'
+          plugin_args: 'placeholder'
+          interval: 2
+      peers:
+        test_peer:
+          host: '127.0.1.2'
+          port: 6666
+
+  system:
+    monitoring:
+      test:
+
+  peers:
+    test:
+      host: '127.0.1.1'
+      port: 6185
+
+  _TEST: false
+  _TEST_STDOUT: 'ERROR'

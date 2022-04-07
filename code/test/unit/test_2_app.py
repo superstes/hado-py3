@@ -24,6 +24,10 @@ class PseudoPlugin:
         except KeyError:
             pass
 
+    @staticmethod
+    def get_status() -> bool:
+        return True
+
 
 class PseudoResource(PseudoPlugin):
     ACTIONS = {
@@ -41,6 +45,10 @@ class PseudoResource(PseudoPlugin):
         self.on_failure = config['on_failure'] if 'on_failure' in config else None
         self.on_shutdown = config['on_shutdown'] if 'on_shutdown' in config else None
         self.mode = config['mode'] if 'mode' in config else 'active-standby'
+
+    @staticmethod
+    def get_status() -> bool:
+        return True
 
 
 def check_action(c, a: str, i: PseudoPlugin, n: bool = False):

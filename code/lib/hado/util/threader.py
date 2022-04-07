@@ -11,6 +11,7 @@ from traceback import format_exc
 
 from hado.util.debug import log
 from hado.core.config import shared
+from hado.core.config.defaults import ENGINE as ENGINE_DEFAULTS
 
 
 class Workload(Thread):
@@ -67,7 +68,13 @@ class Workload(Thread):
         except Exception as e:
             exc_type, _, _ = sys_exc_info()
             log(f"Thread {self.log_name} failed with error: \"{exc_type} - {e}\"")
-            log(f"{format_exc(limit=shared.CONFIG_ENGINE['TRACEBACK_LINES'])}")
+            try:
+                tbl = shared.CONFIG_ENGINE['TRACEBACK_LINES']
+
+            except AttributeError:
+                tbl = ENGINE_DEFAULTS['TRACEBACK_LINES']
+
+            log(format_exc(limit=tbl))
 
             if not self.once:
                 self.run()

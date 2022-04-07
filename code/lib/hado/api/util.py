@@ -1,5 +1,5 @@
 from ipaddress import ip_address
-from flask import request, abort
+from flask import request, jsonify, make_response
 
 from hado.core.config import shared
 from hado.util.debug import log
@@ -8,6 +8,7 @@ HTTP_STATI = {
     'NOT_FOUND': 404,
     'DENIED': 403,
     'NOT_IMPL': 501,
+    'OK': 200,
 }
 
 
@@ -26,7 +27,9 @@ def deny_public():
                 f"as the ip is public and not accept-listed!",
                 lv=3
             )
-            abort(HTTP_STATI['DENIED'])
+            return json_error('DENIED')
+
+    return None
 
 
 def deny_nonlocal(ip):
@@ -38,7 +41,7 @@ def deny_nonlocal(ip):
                 f"as the ip is non-loopback!",
                 lv=3
             )
-            abort(HTTP_STATI['DENIED'])
+            return json_error('DENIED')
 
     elif ip not in shared.CONFIG_ENGINE['API_POST_ACCEPTLIST']:
         log(
@@ -46,4 +49,18 @@ def deny_nonlocal(ip):
             f"as the ip is non-loopback and not accept-listed!",
             lv=3
         )
-        abort(HTTP_STATI['DENIED'])
+        return json_error('DENIED')
+
+    return None
+
+
+def json_error(code: str):
+    msg = {
+        'DENIED': 'Access denied!',
+        'NOT_FOUND': 'Requested resource or route does not exist!',
+        'NOT_IMPL': 'Requested route is not yet implemented!',
+    }
+    return make_response(
+        jsonify(message=msg[code]),
+        HTTP_STATI[code]
+    )

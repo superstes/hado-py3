@@ -8,6 +8,10 @@ a:  # minimal OK
   system:
     monitoring:
       test:
+  peers:
+    test:
+      host: '127.0.1.1'
+      port: 6185
   _test: 'a'
   _TEST: true
   _TEST_NSTDOUT: 'ERROR|WARNING'
@@ -46,3 +50,27 @@ f:  # fail if apps only contains empty-string
   _test: 'f'
   _TEST: false
   _TEST_STDOUT: 'ERROR'
+
+g:  # invalid global peer
+  apps:
+    test:
+  system:
+    monitoring:
+      test:
+  peers:
+    test:
+      host:
+  _test: 'g'
+  _TEST: false
+  _TEST_STDOUT: 'ERROR'
+
+h:  # warn no global peer
+  apps:
+    test:
+  system:
+    monitoring:
+      test:
+  _test: 'h'
+  _TEST: true
+  _TEST_STDOUT: 'WARNING'
+  _TEST_NSTDOUT: 'ERROR'
