@@ -38,7 +38,7 @@ class Peer:
     def fetch(self):
         if self.is_up:
             data = self._request()
-            if len(data) > 0:
+            if data is not None and len(data) > 0:
                 self._update(data=data)
 
     def _request(self) -> dict:
@@ -131,4 +131,4 @@ class Peer:
         }
 
     def __repr__(self):
-        return f"HA-DO PEER: {self.__dict__}"
+        return f"HA-DO PEER: {self.__dict__}".replace(self.pwd, '********')

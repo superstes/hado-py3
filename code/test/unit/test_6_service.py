@@ -1,7 +1,7 @@
 # Test functionality of the service-object
 
 from os import getcwd, remove
-# from time import time, sleep
+from time import time, sleep
 from pathlib import Path
 from re import match as regex_match
 import pytest
@@ -16,7 +16,19 @@ WAIT = 0.2
 class TestService:
     def test_service_start_status(self, mocker):
         mocker.patch('hado.service.run.Service._thread', return_value=None)
+        mocker.patch('hado.service.run.Service._run', return_value=None)
         mocker.patch('hado.core.switch.fetch.add_workers', return_value=None)
+        svc = Service()
+
+        svc.start()
+
+        def fail(threader: None):
+            raise ValueError()
+
+        mocker.patch('hado.core.switch.fetch.add_workers', side_affect=fail)
+
+        # with pytest.raises(ValueError):
+        svc.start()
 
     def test_service_stop(self, capsys, mocker):
         mocker.patch('hado.util.threader.log', return_value=None)
@@ -30,28 +42,31 @@ class TestService:
             stdout, _ = capsys.readouterr()
             assert regex_match(".*received signal.*", stdout.replace('\n', ' '))
 
-    # def test_service_thread(self):
-    #     test_file = '/tmp/aaaaaaaa'
-    #     desc = 'TestThread_1'
-    #     svc = Service()
-    #
-    #     class TestProc:
-    #         @staticmethod
-    #         def start():
-    #             with open(test_file, 'w+') as f:
-    #                 f.write('test')
-    #
-    #     svc._thread(
-    #         i=5,
-    #         d={'run': TestProc(), 'method': 'start'},
-    #         desc=desc,
-    #     )
-    #     svc.THREADER.start()
-    #     sleep(WAIT)
-    #     svc.THREADER.stop()
-    #     sleep(WAIT)
-    #     assert Path(test_file).is_file()
-    #     remove(test_file)
+        sleep(WAIT)
+
+    def test_service_thread(self):
+        test_file = f'/tmp/{time()}'
+        desc = 'TestThread_1'
+        svc = Service()
+
+        class TestProc:
+            @staticmethod
+            def start():
+                if not Path(test_file).is_file():
+                    with open(test_file, 'w+') as f:
+                        f.write('test')
+
+        svc._thread(
+            i=0.1,
+            d={'run': TestProc(), 'method': 'start'},
+            desc=desc,
+        )
+        svc.THREADER.start()
+        sleep(WAIT)
+        svc.THREADER.stop()
+        assert Path(test_file).is_file()
+        remove(test_file)
+        sleep(WAIT)
 
     def test_service_init_config(self, capsys, mocker):
         mocker.patch('hado.util.threader.log', return_value=None)

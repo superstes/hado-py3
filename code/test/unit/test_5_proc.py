@@ -142,18 +142,10 @@ class TestProcessing:
         class TestProc:
             @staticmethod
             def start():
-                print("STARTING")
                 with open(test_file, 'w+') as f:
                     f.write('test')
 
                 sleep(1)
-
-            def __del__(self):
-                try:
-                    remove(test_file)
-
-                except FileNotFoundError:
-                    pass
 
         t = Loop()
         thread(
@@ -171,6 +163,7 @@ class TestProcessing:
         sleep(WAIT)
         assert Path(test_file).is_file()
         del t
+        remove(test_file)
 
     def test_process_basic(self, capsys):
         test_file = f'/tmp/{time()}'

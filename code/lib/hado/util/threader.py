@@ -17,7 +17,8 @@ from hado.core.config.defaults import ENGINE as ENGINE_DEFAULTS
 class Workload(Thread):
     def __init__(
             self, sleep: timedelta, execute, data, loop_instance, name: str,
-            description: str, once: bool = False, daemon: bool = True
+            description: str, once: bool = False, daemon: bool = True,
+            stop_time: (int, float)=2
     ):
         Thread.__init__(self, daemon=daemon, name=name)
         self.sleep = sleep
@@ -28,13 +29,14 @@ class Workload(Thread):
         self.state_stop = Event()
         self.description = description
         self.log_name = f"\"{self.name}\" (\"{description}\")"
+        self.stop_time = stop_time
 
     def stop(self) -> bool:
         log(f"Thread stopping {self.log_name}", lv=3)
         self.state_stop.set()
 
         try:
-            self.join(2)
+            self.join(self.stop_time)
             if self.is_alive():
                 log(f"Unable to join thread {self.log_name}", lv=2)
 
@@ -93,16 +95,9 @@ class Loop:
 
     def add_thread_deco(
             self, sleep: (int, float, timedelta), thread_data, description: str,
-            once: bool = False, daemon: bool = True
+            once: bool = False, daemon: bool = True, stop_time: (int, float)=2,
     ):
         log(f"Adding thread for \"{description}\" with interval \"{sleep}\"", lv=4)
-        self.thread_nr += 1
-        if not isinstance(sleep, timedelta):
-            if sleep in [0, 0.0]:
-                once = True
-                sleep = 10
-
-            sleep = timedelta(seconds=sleep)
 
         def decorator(function):
             self.add_thread(
@@ -112,6 +107,7 @@ class Loop:
                 once=once,
                 description=description,
                 daemon=daemon,
+                stop_time=stop_time,
             )
             return function
 
@@ -119,7 +115,7 @@ class Loop:
 
     def add_thread(
             self, execute, sleep: (int, float, timedelta), thread_data, description: str,
-            once: bool = False, daemon: bool = True
+            once: bool = False, daemon: bool = True, stop_time: (int, float)=2,
     ):
         self.thread_nr += 1
         if not isinstance(sleep, timedelta):
@@ -138,6 +134,7 @@ class Loop:
                 once=once,
                 description=description,
                 daemon=daemon,
+                stop_time=stop_time,
                 name=f"Thread #{self.thread_nr}",
             )
         )

@@ -5,57 +5,13 @@ from base64 import b64encode
 import pytest
 
 from hado.api.server import api
-from hado.core.system import System
+
 from hado.core.config import shared
 
 from .util import HTTP_CODES, check_methods
+from .pseudo import PseudoConfig
 
 # pylint: disable=W0621
-
-
-class PseudoPlugin:
-    def __init__(self, n: str):
-        self.name = n
-        self.status = True
-        self.stats = {self.name: self.status}
-
-
-class PseudoApp:
-    # pylint: disable=R0902
-    def __init__(self, r: list, m: list):
-        self.name = 'TEST'
-        self.resources = r
-        self.monitoring = m
-        self.status = True
-        self.health = 69
-        self.resource_health = 69
-        self.monitoring_health = 69
-        self.stats = {
-            'status': self.status,
-            'health': self.health,
-            'health_res': self.resource_health,
-            'health_mon': self.monitoring_health,
-            'resources': {r.name: r.status for r in self.resources},
-            'monitoring': {m.name: m.status for m in self.monitoring},
-        }
-
-
-TEST_PLUGIN_R = PseudoPlugin(n='TestRes1')
-TEST_PLUGIN_M = PseudoPlugin(n='TestMon1')
-TEST_SYSTEM = System(monitoring=[])
-
-
-class PseudoConfig:
-    CONFIG_LOADED = {
-        'apps': [
-            PseudoApp(
-                r=[TEST_PLUGIN_R],
-                m=[TEST_PLUGIN_M]
-            )
-        ],
-        'system': TEST_SYSTEM,
-        'peers': [],
-    }
 
 
 @pytest.fixture
@@ -99,23 +55,23 @@ class TestAPIStati:
         rg = client.get('/s', headers=auth())
         assert rg.status_code == HTTP_CODES['OK']
         assert rg.content_type == 'application/json'
-        assert json_loads(rg.data) == TEST_SYSTEM.stats
+        assert json_loads(rg.data) == PseudoConfig.TEST_SYSTEM.stats
         check_methods(p='/s', c=client)
 
     def test_get_resource(self, client):
-        path = f'/a/TEST/r/{TEST_PLUGIN_R.name}'
+        path = f'/a/TEST/r/{PseudoConfig.TEST_PLUGIN_R.name}'
         rg = client.get(path, headers=auth())
         assert rg.status_code == HTTP_CODES['OK']
         assert rg.content_type == 'application/json'
-        assert json_loads(rg.data) == TEST_PLUGIN_R.stats
+        assert json_loads(rg.data) == PseudoConfig.TEST_PLUGIN_R.stats
         check_methods(p=path, c=client)
 
     def test_get_monitoring(self, client):
-        path = f'/a/TEST/m/{TEST_PLUGIN_M.name}'
+        path = f'/a/TEST/m/{PseudoConfig.TEST_PLUGIN_M.name}'
         rg = client.get(path, headers=auth())
         assert rg.status_code == HTTP_CODES['OK']
         assert rg.content_type == 'application/json'
-        assert json_loads(rg.data) == TEST_PLUGIN_M.stats
+        assert json_loads(rg.data) == PseudoConfig.TEST_PLUGIN_M.stats
         check_methods(p=path, c=client)
 
     def test_get_whole(self, client):
@@ -125,7 +81,7 @@ class TestAPIStati:
         assert rg.content_type == 'application/json'
         stats_apps = {'apps': {app.name: app.stats for app in PseudoConfig.CONFIG_LOADED['apps']}}
         stats_peers = {'peers': {}}
-        assert json_loads(rg.data) == TEST_SYSTEM.stats | stats_apps | stats_peers
+        assert json_loads(rg.data) == PseudoConfig.TEST_SYSTEM.stats | stats_apps | stats_peers
         check_methods(p=path, c=client)
 
     def test_get_sync(self, client):
@@ -135,7 +91,7 @@ class TestAPIStati:
         assert rg.status_code == HTTP_CODES['OK']
         assert rg.content_type == 'application/json'
         stats_apps = {'apps': {app.name: app.stats for app in PseudoConfig.CONFIG_LOADED['apps']}}
-        assert json_loads(rg.data) == TEST_SYSTEM.stats | stats_apps
+        assert json_loads(rg.data) == PseudoConfig.TEST_SYSTEM.stats | stats_apps
         check_methods(p=path, c=client)
 
     def test_post_maintenance(self, client):

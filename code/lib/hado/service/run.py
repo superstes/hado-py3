@@ -115,7 +115,7 @@ class Service:
         ).get()
         return True
 
-    def _thread(self, i: int, d: dict, desc: str):
+    def _thread(self, i: (int, float), d: dict, desc: str):
         # pylint: disable=W0612
         @self.THREADER.add_thread_deco(
             sleep=i,
